@@ -10,7 +10,7 @@ Category:           Graphics
 Synopsis:           Very primitive binding to OGRE
 description:        This package contains bindings to a subset of OGRE
                     (Object-Oriented Graphics Rendering Engine)
-                    (http://www.ogre3d.org/).
+                    (<http://www.ogre3d.org/>).
 Build-type:         Simple
 extra-source-files: csrc/*
 

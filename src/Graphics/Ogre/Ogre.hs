@@ -1,3 +1,15 @@
+-- | This module includes the necessary functionality for using OGRE from
+--   Haskell. Note that you need OGRE and CEGUI libraries and headers.
+--   Currently, only OGRE version 1.7.0dev-unstable (Cthugha) has been tested.
+--   Usage for a simple scene creation:
+--
+--   1. Create the settings structure 'OgreSettings'.
+--
+--   2. Define your scene by building up an 'OgreScene'.
+--
+--   3. 'initOgre' using OgreSettings and OgreScene.
+--
+--   4. Call 'renderOgre' in a loop.
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# INCLUDE <ogre.h> #-}
 module Graphics.Ogre.Ogre(Vector3(..),
@@ -27,7 +39,7 @@ import CString
 
 -- C imports
 foreign import ccall "ogre.h init" c_init :: CFloat -> CFloat -> CFloat -> CInt -> CString -> CInt -> CString -> CFloat -> CFloat -> CFloat -> IO ()
-foreign import ccall "ogre.h newEntity" c_new_entity :: CString -> CString -> CInt -> IO ()
+-- foreign import ccall "ogre.h newEntity" c_new_entity :: CString -> CString -> CInt -> IO ()
 foreign import ccall "ogre.h setEntityPosition" c_set_entity_position :: CString -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h cleanup" c_cleanup :: IO ()
 foreign import ccall "ogre.h render" c_render :: IO ()
@@ -48,7 +60,9 @@ data Color = Color { r :: Float, g :: Float, b :: Float }
 -- Ogre-specific data types
 data ShadowTechnique = None
                      | TextureModulative
-                     | StencilModulative
+                     | StencilModulative  -- ^ Note: as of 0.0.1, stencil shadows
+                                          -- do not work when the window was created
+                                          -- by SDL.
                      | StencilAdditive
     deriving (Eq, Show, Read, Enum)
 
@@ -61,6 +75,7 @@ data Light = SpotLight { spotlightname     :: String
                        }
     deriving (Eq, Show, Read)
 
+-- | See <http://www.ogre3d.org/docs/api/html/classOgre_1_1Plane.html>
 data EntityType = Plane { normal      :: Vector3
                         , shift       :: Float
                         , width       :: Float
@@ -94,9 +109,14 @@ data Entity = Entity { name        :: String
     deriving (Eq, Show, Read)
 
 -- Main Ogre data types
-data OgreSettings = OgreSettings { resourcefile     :: FilePath
-                                 , autocreatewindow :: Bool
-                                 , caption          :: String
+-- | General, scene-wide Ogre settings.
+data OgreSettings = OgreSettings { resourcefile     :: FilePath          -- ^ Path to resources.cfg.
+                                 , autocreatewindow :: Bool              -- ^ Whether the window should 
+                                                                         -- be created automatically (by Ogre).
+                                                                         -- Turn this off if the window should
+                                                                         -- be created by another library
+                                                                         -- (e.g.) SDL.
+                                 , caption          :: String            -- ^ Window caption.
                                  , ambientlight     :: Color
                                  , shadowtechnique  :: ShadowTechnique
                                  }
@@ -108,8 +128,9 @@ data OgreScene = OgreScene { camera          :: Camera
                            }
     deriving (Eq, Show, Read)
 
+-- | Main configuration structure for Ogre.
 data Ogre = Ogre { settings :: OgreSettings
-                 , scene    :: OgreScene
+                 , scene    :: OgreScene     -- ^ Entities and other objects that define the scene.
                  }
     deriving (Eq, Show, Read)
 
@@ -129,6 +150,7 @@ unitY = Vector3 0.0 1.0 0.0
 unitZ :: Vector3
 unitZ = Vector3 0.0 0.0 1.0
 
+-- | Initializes Ogre with given settings. This must be called before manipulating or rendering the scene.
 initOgre :: Ogre -> IO ()
 initOgre (Ogre sett scen) = do
     let amb = ambientlight sett
@@ -159,11 +181,15 @@ addEntity (Entity n pos t sh sc) = do
         withCString mat $ \c_material -> do
         c_add_plane (realToFrac (x norm)) (realToFrac (y norm)) (realToFrac (z norm)) (realToFrac (shif)) c_name (realToFrac (wid)) (realToFrac (hei)) (fromIntegral xseg) (fromIntegral (yseg)) (realToFrac (ut)) (realToFrac (vt)) (realToFrac (x upv)) (realToFrac (y upv)) (realToFrac (z upv)) (realToFrac (x pos)) (realToFrac (y pos)) (realToFrac (z pos)) c_material ((fromIntegral . fromEnum) sh)
 
-setEntityPosition :: String -> Vector3 -> IO ()
+setEntityPosition :: String    -- ^ Name of entity
+                  -> Vector3   -- ^ New position
+                  -> IO ()
 setEntityPosition n (Vector3 x_ y_ z_) = withCString n $ \cn -> c_set_entity_position cn (realToFrac x_) (realToFrac y_) (realToFrac z_)
 
+-- | 'renderOgre' renders one frame.
 renderOgre :: IO ()
 renderOgre = c_render
 
 cleanupOgre :: IO ()
 cleanupOgre = c_cleanup
+
