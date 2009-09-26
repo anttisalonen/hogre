@@ -14,6 +14,7 @@ int newEntity(const char* name, const char* model, int castshadows);
 int setEntityPosition(const char* name, float x, float y, float z);
 int cleanup();
 int render();
+void clearScene();
 void addLight(const char* lightname, int lighttype, 
         float diffcolor_r, float diffcolor_g, float diffcolor_b, 
         float speccolor_r, float speccolor_g, float speccolor_b, 
