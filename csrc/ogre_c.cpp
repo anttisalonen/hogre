@@ -256,13 +256,15 @@ void clearScene()
 
 void setupCamera(float pos_x, float pos_y, float pos_z, 
         float look_x, float look_y, float look_z, 
-        float pitch, float yaw, float roll)
+        float roll)
 {
-    gCamnode->setPosition (Vector3(pos_x, pos_y, pos_z));
-    gCamnode->lookAt (Vector3(look_x, look_y, look_z), Node::TS_WORLD);
-    gCamnode->yaw(Radian(yaw));
-    gCamnode->pitch(Radian(pitch));
-    gCamnode->roll(Radian(roll));
+    gCam->setPosition (Vector3(pos_x, pos_y, pos_z));
+    // gCamnode->lookAt (Vector3(look_x, look_y, look_z), Node::TS_WORLD);
+    gCam->lookAt(look_x, look_y, look_z);
+    // gCam->yaw(Radian(yaw));
+    // gCam->pitch(Radian(pitch));
+    if(abs(roll) > 0.0001f)
+        gCam->roll(Radian(roll));
 }
 
 void addEntity(const char* name, const char* mesh, 

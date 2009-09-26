@@ -29,7 +29,7 @@ void addPlane(float plane_x, float plane_y, float plane_z,
         const char *materialname, int castshadows);
 void setupCamera(float pos_x, float pos_y, float pos_z, 
         float look_x, float look_y, float look_z, 
-        float pitch, float yaw, float roll);
+        float roll);
 void addEntity(const char* name, const char* mesh, 
         float pos_x, float pos_y, float pos_z, 
         float scale_x, float scale_y, float scale_z, 

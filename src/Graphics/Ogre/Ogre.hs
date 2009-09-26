@@ -29,6 +29,7 @@ module Graphics.Ogre.Ogre(Vector3(..),
         halfPI,
         degToRad,
         unitX, unitY, unitZ,
+        negUnitX, negUnitY, negUnitZ,
         initOgre,
         addScene,
         setupCamera,
@@ -50,7 +51,7 @@ foreign import ccall "ogre.h setEntityPosition" c_set_entity_position :: CString
 foreign import ccall "ogre.h cleanup" c_cleanup :: IO ()
 foreign import ccall "ogre.h render" c_render :: IO ()
 foreign import ccall "ogre.h addEntity" c_add_entity :: CString -> CString -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> IO ()
-foreign import ccall "ogre.h setupCamera" c_setup_camera :: CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> IO ()
+foreign import ccall "ogre.h setupCamera" c_setup_camera :: CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h addPlane" c_add_plane :: CFloat -> CFloat -> CFloat -> CFloat -> CString -> CFloat -> CFloat -> CInt -> CInt -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CString -> CInt -> IO ()
 foreign import ccall "ogre.h addLight" c_add_light :: CString -> CInt -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h clearScene" c_clear_scene :: IO ()
@@ -88,7 +89,7 @@ data Light = SpotLight { spotlightname     :: String
                        }
     deriving (Eq, Show, Read)
 
--- | See <http://www.ogre3d.org/docs/api/html/classOgre_1_1Plane.html>
+-- | See <http://www.ogre3d.org/docs/api/html/classOgre_1_1Plane.html> and Ogre::MeshManager::createPlane: <http://www.ogre3d.org/docs/api/html/classOgre_1_1MeshManager.html>
 data EntityType = Plane { normal      :: Vector3
                         , shift       :: Float
                         , width       :: Float
@@ -159,6 +160,15 @@ unitY = Vector3 0.0 1.0 0.0
 unitZ :: Vector3
 unitZ = Vector3 0.0 0.0 1.0
 
+negUnitX :: Vector3
+negUnitX = Vector3 (-1.0) 0.0 0.0
+
+negUnitY :: Vector3
+negUnitY = Vector3 0.0 (-1.0) 0.0
+
+negUnitZ :: Vector3
+negUnitZ = Vector3 0.0 0.0 (-1.0)
+
 -- | Initializes Ogre with given settings. This must be called before manipulating or rendering the scene.
 initOgre :: OgreSettings -> IO ()
 initOgre sett = do
@@ -178,7 +188,7 @@ addScene scen = do
     mapM_ addEntity (entities scen)
 
 setupCamera :: Camera -> IO ()
-setupCamera (Camera look rot pos) = do
+setupCamera (Camera look rol pos) = do
     c_setup_camera 
         (realToFrac (x pos)) 
         (realToFrac (y pos)) 
@@ -186,7 +196,7 @@ setupCamera (Camera look rot pos) = do
         (realToFrac (x look)) 
         (realToFrac (y look)) 
         (realToFrac (z look)) 
-        0.0 0.0 (realToFrac rot)
+        (realToFrac rol)
 
 addLight :: Light -> IO ()
 addLight (SpotLight nam pos dif spec dir (rmin, rmax)) = do
@@ -206,7 +216,7 @@ addEntity (Entity n pos t sh sc) = do
                 (realToFrac (x sc)) 
                 (realToFrac (y sc)) 
                 (realToFrac (z sc)) 
-                (realToFrac pit) (realToFrac ro) (realToFrac ya)
+                (realToFrac pit) (realToFrac ya) (realToFrac ro)
       Plane norm shif wid hei xseg yseg ut vt upv mat -> do
         withCString mat $ \c_material -> do
         c_add_plane (realToFrac (x norm)) (realToFrac (y norm)) (realToFrac (z norm)) (realToFrac (shif)) c_name (realToFrac (wid)) (realToFrac (hei)) (fromIntegral xseg) (fromIntegral (yseg)) (realToFrac (ut)) (realToFrac (vt)) (realToFrac (x upv)) (realToFrac (y upv)) (realToFrac (z upv)) (realToFrac (x pos)) (realToFrac (y pos)) (realToFrac (z pos)) c_material ((fromIntegral . fromEnum) sh)
