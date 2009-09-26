@@ -7,9 +7,14 @@
 --
 --   2. Define your scene by building up an 'OgreScene'.
 --
---   3. 'initOgre' using OgreSettings and OgreScene.
+--   3. call 'initOgre' using your OgreSettings.
 --
---   4. Call 'renderOgre' in a loop.
+--   4. add your scene using 'addScene'.
+--
+--   5. Call 'renderOgre' in a loop.
+--
+--   6. To ensure clean shutdown, call 'cleanupOgre'.
+--
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# INCLUDE <ogre.h> #-}
 module Graphics.Ogre.Ogre(Vector3(..),
