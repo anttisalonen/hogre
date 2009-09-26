@@ -13,7 +13,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# INCLUDE <ogre.h> #-}
 module Graphics.Ogre.Ogre(Vector3(..),
-        Angle, Color(..),
+        Angle, Rotation(..), Color(..),
         ShadowTechnique(..),
         Light(..),
         EntityType(..),
@@ -21,12 +21,13 @@ module Graphics.Ogre.Ogre(Vector3(..),
         Entity(..),
         OgreSettings(..),
         OgreScene(..),
-        Ogre(..),
         halfPI,
         degToRad,
         unitX, unitY, unitZ,
         initOgre,
-        addCamera,
+        addScene,
+        setupCamera,
+        clearScene,
         addLight,
         addEntity,
         setEntityPosition,
@@ -47,12 +48,19 @@ foreign import ccall "ogre.h addEntity" c_add_entity :: CString -> CString -> CF
 foreign import ccall "ogre.h setupCamera" c_setup_camera :: CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h addPlane" c_add_plane :: CFloat -> CFloat -> CFloat -> CFloat -> CString -> CFloat -> CFloat -> CInt -> CInt -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CString -> CInt -> IO ()
 foreign import ccall "ogre.h addLight" c_add_light :: CString -> CInt -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> IO ()
+foreign import ccall "ogre.h clearScene" c_clear_scene :: IO ()
 
 -- Primitive data types
 data Vector3 = Vector3 { x :: Float, y :: Float, z :: Float }
     deriving (Eq, Show, Read)
 
 type Angle = Float
+
+data Rotation = YPR { yaw   :: Angle
+                    , pitch :: Angle
+                    , roll  :: Angle
+                    }
+    deriving (Eq, Show, Read)
 
 data Color = Color { r :: Float, g :: Float, b :: Float }
     deriving (Eq, Show, Read)
@@ -88,9 +96,7 @@ data EntityType = Plane { normal      :: Vector3
                         , material    :: String
                         }
                 | StdMesh { mesh        :: String 
-                          , pitch       :: Angle
-                          , roll        :: Angle
-                          , yaw         :: Angle
+                          , rotation    :: Rotation
                           }
     deriving (Eq, Show, Read)
 
@@ -99,6 +105,9 @@ data Camera = Camera { lookat      :: Vector3
                      , camposition :: Vector3
                      }
     deriving (Eq, Show, Read)
+
+defaultCamera :: Camera
+defaultCamera = Camera (Vector3 1.0 0.0 0.0) 0 (Vector3 0.0 0.0 0.0)
 
 data Entity = Entity { name        :: String
                      , position    :: Vector3
@@ -109,7 +118,7 @@ data Entity = Entity { name        :: String
     deriving (Eq, Show, Read)
 
 -- Main Ogre data types
--- | General, scene-wide Ogre settings.
+-- | General, scene-wide Ogre settings. Main configuration structure for Ogre.
 data OgreSettings = OgreSettings { resourcefile     :: FilePath          -- ^ Path to resources.cfg.
                                  , autocreatewindow :: Bool              -- ^ Whether the window should 
                                                                          -- be created automatically (by Ogre).
@@ -122,16 +131,11 @@ data OgreSettings = OgreSettings { resourcefile     :: FilePath          -- ^ Pa
                                  }
     deriving (Eq, Show, Read)
 
+-- | Entities and other objects that define the scene.
 data OgreScene = OgreScene { camera          :: Camera
                            , entities        :: [Entity]
                            , lights          :: [Light]
                            }
-    deriving (Eq, Show, Read)
-
--- | Main configuration structure for Ogre.
-data Ogre = Ogre { settings :: OgreSettings
-                 , scene    :: OgreScene     -- ^ Entities and other objects that define the scene.
-                 }
     deriving (Eq, Show, Read)
 
 -- Helpers
@@ -151,19 +155,33 @@ unitZ :: Vector3
 unitZ = Vector3 0.0 0.0 1.0
 
 -- | Initializes Ogre with given settings. This must be called before manipulating or rendering the scene.
-initOgre :: Ogre -> IO ()
-initOgre (Ogre sett scen) = do
+initOgre :: OgreSettings -> IO ()
+initOgre sett = do
     let amb = ambientlight sett
     withCString (resourcefile sett) $ \c_res -> do
     withCString (caption sett) $ \c_caption -> do
     c_init (realToFrac (r amb)) (realToFrac (g amb)) (realToFrac (b amb)) ((fromIntegral . fromEnum) (shadowtechnique sett)) c_res ((fromIntegral . fromEnum) (autocreatewindow sett)) c_caption 0.0 0.0 0.0
-    addCamera (camera scen)
+    setupCamera defaultCamera
+
+clearScene :: IO ()
+clearScene = c_clear_scene
+
+addScene :: OgreScene -> IO ()
+addScene scen = do
+    setupCamera (camera scen)
     mapM_ addLight (lights scen)
     mapM_ addEntity (entities scen)
 
-addCamera :: Camera -> IO ()
-addCamera (Camera look rol pos) = do
-    c_setup_camera (realToFrac (x pos)) (realToFrac (y pos)) (realToFrac (z pos)) (realToFrac (x look)) (realToFrac (y look)) (realToFrac (z look)) 0.0 0.0 (realToFrac rol)
+setupCamera :: Camera -> IO ()
+setupCamera (Camera look rot pos) = do
+    c_setup_camera 
+        (realToFrac (x pos)) 
+        (realToFrac (y pos)) 
+        (realToFrac (z pos)) 
+        (realToFrac (x look)) 
+        (realToFrac (y look)) 
+        (realToFrac (z look)) 
+        0.0 0.0 (realToFrac rot)
 
 addLight :: Light -> IO ()
 addLight (SpotLight nam pos dif spec dir (rmin, rmax)) = do
@@ -174,9 +192,16 @@ addEntity :: Entity -> IO ()
 addEntity (Entity n pos t sh sc) = do
     withCString n $ \c_name -> do
     case t of
-      StdMesh m pit rol ya -> do
+      StdMesh m (YPR ya pit ro) -> do
         withCString m $ \c_meshname -> do
-        c_add_entity c_name c_meshname (realToFrac (x pos)) (realToFrac (y pos)) (realToFrac (z pos)) (realToFrac (x sc)) (realToFrac (y sc)) (realToFrac (z sc)) (realToFrac pit) (realToFrac rol) (realToFrac ya)
+        c_add_entity c_name c_meshname 
+                (realToFrac (x pos)) 
+                (realToFrac (y pos)) 
+                (realToFrac (z pos)) 
+                (realToFrac (x sc)) 
+                (realToFrac (y sc)) 
+                (realToFrac (z sc)) 
+                (realToFrac pit) (realToFrac ro) (realToFrac ya)
       Plane norm shif wid hei xseg yseg ut vt upv mat -> do
         withCString mat $ \c_material -> do
         c_add_plane (realToFrac (x norm)) (realToFrac (y norm)) (realToFrac (z norm)) (realToFrac (shif)) c_name (realToFrac (wid)) (realToFrac (hei)) (fromIntegral xseg) (fromIntegral (yseg)) (realToFrac (ut)) (realToFrac (vt)) (realToFrac (x upv)) (realToFrac (y upv)) (realToFrac (z upv)) (realToFrac (x pos)) (realToFrac (y pos)) (realToFrac (z pos)) c_material ((fromIntegral . fromEnum) sh)
