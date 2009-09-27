@@ -11,7 +11,7 @@ int init(float ambient_light_r, float ambient_light_g, float ambient_light_b,
         int shadow_type, const char* res_filename, int autocreatewindow, const char* title,
         float bg_r, float bg_g, float bg_b);
 int newEntity(const char* name, const char* model, int castshadows);
-int setEntityPosition(const char* name, float x, float y, float z);
+void setEntityPosition(const char* name, float x, float y, float z);
 int cleanup();
 int render();
 void clearScene();
@@ -35,7 +35,6 @@ void addEntity(const char* name, const char* mesh,
         float scale_x, float scale_y, float scale_z, 
         float pitch, float yaw, float roll);
 int newEntity(const char* name, const char* model, int castshadows);
-int setEntityPosition(const char* name, float x, float y, float z);
 void setLightType(const char* lightname, int lighttype);
 void setLightDiffuseColor(const char* lightname, float color_r, float color_g, float color_b);
 void setLightSpecularColor(const char* lightname, float color_r, float color_g, float color_b);
@@ -43,6 +42,11 @@ void setLightDirection(const char* lightname, float x, float y, float z);
 void setLightPosition(const char* lightname, float x, float y, float z);
 void setSpotlightRange(const char* lightname, float min_rad, float max_rad);
 void newLight(const char* lightname);
+void rotateEntity(const char* name, float yaw, float pitch, float roll, int space);
+void rotateCamera(float yaw, float pitch, float roll, int space);
+void translateEntity(const char* name, float x, float y, float z, int space);
+void translateCamera(float x, float y, float z);
+void setLightVisible(const char* name, int vis);
 }
 
 #endif

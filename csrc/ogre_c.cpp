@@ -4,6 +4,9 @@ using namespace Ogre;
 using namespace std;
 
 static const char* scenemgrname = "Default SceneManager";
+static const char* camnodename = "camnode0";
+
+static const float epsilon = 0.0001f;
 
 static Root *gRoot;
 static SceneManager *gMgr;
@@ -98,7 +101,7 @@ static void initCamera(float bg_r, float bg_g, float bg_b)
     gCam->setAutoAspectRatio(true);
 
     std::cerr << "create node" << std::endl;
-    gCamnode = gMgr->getRootSceneNode()->createChildSceneNode("camnode0");
+    gCamnode = gMgr->getRootSceneNode()->createChildSceneNode(camnodename);
     std::cerr << "attach" << std::endl;
     gCamnode->attachObject(gCam);
 }
@@ -173,10 +176,9 @@ int newEntity(const char* name, const char* model, int castshadows)
     return 0;
 }
 
-int setEntityPosition(const char* name, float x, float y, float z)
+void setEntityPosition(const char* name, float x, float y, float z)
 {
-    gMgr->getEntity(name)->getParentNode()->setPosition(Vector3(x, y, z));
-    return 0;
+    gMgr->getEntity(name)->getParentSceneNode()->setPosition(Vector3(x, y, z));
 }
 
 void setLightType(const char* lightname, int lighttype)
@@ -267,11 +269,11 @@ void setupCamera(float pos_x, float pos_y, float pos_z,
         float roll)
 {
     gCam->setPosition (Vector3(pos_x, pos_y, pos_z));
-    // gCamnode->lookAt (Vector3(look_x, look_y, look_z), Node::TS_WORLD);
-    gCam->lookAt(look_x, look_y, look_z);
-    // gCam->yaw(Radian(yaw));
-    // gCam->pitch(Radian(pitch));
-    if(abs(roll) > 0.0001f)
+    if(abs(look_x) > epsilon && 
+       abs(look_y) > epsilon && 
+       abs(look_z) > epsilon)
+        gCam->lookAt(look_x, look_y, look_z);
+    if(abs(roll) > epsilon)
         gCam->roll(Radian(roll));
 }
 
@@ -292,4 +294,53 @@ void addEntity(const char* name, const char* mesh,
     node1->attachObject(ent1);
 }
 
+static Node::TransformSpace get_transformspace(int space)
+{
+    switch (space)
+    {
+        case 0:
+            return Node::TS_LOCAL;
+        case 1:
+            return Node::TS_PARENT;
+        default:
+            return Node::TS_WORLD;
+    }
+}
+
+static void rotateNode(SceneNode* node, float yaw, float pitch, float roll, int space)
+{
+    Node::TransformSpace ts = get_transformspace(space);
+    node->roll(Radian(roll), ts);
+    node->yaw(Radian(yaw), ts);
+    node->pitch(Radian(pitch), ts);
+}
+
+void rotateEntity(const char* name, float yaw, float pitch, float roll, int space)
+{
+    SceneNode* node = gMgr->getEntity(name)->getParentSceneNode();
+    rotateNode(node, yaw, pitch, roll, space);
+}
+
+void rotateCamera(float yaw, float pitch, float roll, int space)
+{
+    gCam->roll(Radian(roll));
+    gCam->yaw(Radian(yaw));
+    gCam->pitch(Radian(pitch));
+}
+
+void translateEntity(const char* name, float x, float y, float z, int space)
+{
+    SceneNode* node = gMgr->getEntity(name)->getParentSceneNode();
+    node->translate(x, y, z, get_transformspace(space));
+}
+
+void translateCamera(float x, float y, float z)
+{
+    gCam->moveRelative(Vector3(x, y, z));
+}
+
+void setLightVisible(const char* name, int vis)
+{
+    gMgr->getLight(name)->setVisible(vis != 0);
+}
 

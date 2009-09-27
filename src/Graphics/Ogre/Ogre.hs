@@ -19,6 +19,7 @@
 {-# INCLUDE <ogre.h> #-}
 module Graphics.Ogre.Ogre(Vector3(..),
         Angle, Rotation(..), Color(..),
+        TransformSpace(..),
         ShadowTechnique(..),
         Light(..),
         LightType(..),
@@ -39,6 +40,11 @@ module Graphics.Ogre.Ogre(Vector3(..),
         addEntity,
         setLightPosition,
         setEntityPosition,
+        rotateEntity,
+        rotateCamera,
+        translateEntity,
+        translateCamera,
+        setLightVisible,
         renderOgre,
         cleanupOgre)
 where
@@ -57,6 +63,11 @@ foreign import ccall "ogre.h addEntity" c_add_entity :: CString -> CString -> CF
 foreign import ccall "ogre.h setupCamera" c_setup_camera :: CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h addPlane" c_add_plane :: CFloat -> CFloat -> CFloat -> CFloat -> CString -> CFloat -> CFloat -> CInt -> CInt -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CString -> CInt -> IO ()
 foreign import ccall "ogre.h addLight" c_add_light :: CString -> CInt -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> CFloat -> IO ()
+foreign import ccall "ogre.h rotateEntity" c_rotate_entity :: CString -> CFloat -> CFloat -> CFloat -> CInt -> IO ()
+foreign import ccall "ogre.h rotateCamera" c_rotate_camera :: CFloat -> CFloat -> CFloat -> CInt -> IO ()
+foreign import ccall "ogre.h translateEntity" c_translate_entity :: CString -> CFloat -> CFloat -> CFloat -> CInt -> IO ()
+foreign import ccall "ogre.h translateCamera" c_translate_camera :: CFloat -> CFloat -> CFloat -> IO ()
+foreign import ccall "ogre.h setLightVisible" c_set_light_visible :: CString -> CInt -> IO ()
 foreign import ccall "ogre.h clearScene" c_clear_scene :: IO ()
 
 -- Primitive data types
@@ -64,6 +75,11 @@ data Vector3 = Vector3 { x :: Float, y :: Float, z :: Float }
     deriving (Eq, Show, Read)
 
 type Angle = Float
+
+data TransformSpace = Local
+                    | Parent
+                    | World
+    deriving (Eq, Show, Read, Enum)
 
 data Rotation = YPR { yaw   :: Angle
                     , pitch :: Angle
@@ -263,6 +279,21 @@ setEntityPosition :: String    -- ^ Name of entity
                   -> Vector3   -- ^ New position
                   -> IO ()
 setEntityPosition n (Vector3 x_ y_ z_) = withCString n $ \cn -> c_set_entity_position cn (realToFrac x_) (realToFrac y_) (realToFrac z_)
+
+rotateEntity :: String -> Rotation -> TransformSpace -> IO ()
+rotateEntity n (YPR ya pit ro) ts = withCString n $ \cn -> c_rotate_entity cn (realToFrac ya) (realToFrac pit) (realToFrac ro) ((fromIntegral . fromEnum) ts)
+
+rotateCamera :: Rotation -> TransformSpace -> IO ()
+rotateCamera (YPR ya pit ro) ts = c_rotate_camera (realToFrac ya) (realToFrac pit) (realToFrac ro) ((fromIntegral . fromEnum) ts)
+
+translateEntity :: String -> Vector3 -> TransformSpace -> IO ()
+translateEntity n (Vector3 x_ y_ z_) ts = withCString n $ \cn -> c_translate_entity cn (realToFrac x_) (realToFrac y_) (realToFrac z_) ((fromIntegral . fromEnum) ts)
+
+translateCamera :: Vector3 -> IO ()
+translateCamera (Vector3 x_ y_ z_) = c_translate_camera (realToFrac x_) (realToFrac y_) (realToFrac z_)
+
+setLightVisible :: String -> Bool -> IO ()
+setLightVisible n v = withCString n $ \cn -> c_set_light_visible cn ((fromIntegral . fromEnum) v)
 
 -- | 'renderOgre' renders one frame.
 renderOgre :: IO ()
