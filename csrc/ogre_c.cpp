@@ -116,10 +116,14 @@ static void setupScene(float ambient_light_r, float ambient_light_g, float ambie
     gMgr = gRoot->createSceneManager(ST_GENERIC, scenemgrname);
 
     gMgr->setAmbientLight(ColourValue( ambient_light_r, ambient_light_g, ambient_light_b) );
-    gMgr->setShadowTechnique(shadow_type == 0 ? SHADOWTYPE_NONE : 
-            shadow_type == 1 ? SHADOWTYPE_TEXTURE_MODULATIVE : 
-            shadow_type == 2 ? SHADOWTYPE_STENCIL_MODULATIVE :
-            SHADOWTYPE_STENCIL_ADDITIVE);
+    gMgr->setShadowTechnique(
+            shadow_type == 0 ? SHADOWTYPE_NONE : 
+            shadow_type == 1 ? SHADOWTYPE_STENCIL_MODULATIVE : 
+            shadow_type == 2 ? SHADOWTYPE_STENCIL_ADDITIVE : 
+            shadow_type == 3 ? SHADOWTYPE_TEXTURE_MODULATIVE : 
+            shadow_type == 4 ? SHADOWTYPE_TEXTURE_ADDITIVE : 
+            shadow_type == 5 ? SHADOWTYPE_TEXTURE_ADDITIVE_INTEGRATED : 
+                               SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
 }
 
 // Exported functions
@@ -217,14 +221,18 @@ void addLight(const char* lightname, int lighttype,
         float pos_x, float pos_y, float pos_z,
         float range_min_rad, float range_max_rad)
 {
+    Light::LightTypes type = lighttype == 0 ? Light::LT_POINT : lighttype == 1 ? Light::LT_DIRECTIONAL : Light::LT_SPOTLIGHT;
     Light* light;
     light = gMgr->createLight(lightname);
-    light->setType(lighttype == 0 ? Light::LT_POINT : lighttype == 1 ? Light::LT_DIRECTIONAL : Light::LT_SPOTLIGHT);
+    light->setType(type);
     light->setDiffuseColour(diffcolor_r, diffcolor_g, diffcolor_b);
     light->setSpecularColour(speccolor_r, speccolor_g, speccolor_b);
-    light->setDirection(direction_x, direction_y, direction_z);
-    light->setPosition(Vector3(pos_x, pos_y, pos_z));
-    light->setSpotlightRange(Ogre::Radian(range_min_rad), Ogre::Radian(range_max_rad));
+    if(type != Light::LT_POINT)
+        light->setDirection(direction_x, direction_y, direction_z);
+    if(type != Light::LT_DIRECTIONAL)
+        light->setPosition(Vector3(pos_x, pos_y, pos_z));
+    if(type == Light::LT_SPOTLIGHT)
+        light->setSpotlightRange(Ogre::Radian(range_min_rad), Ogre::Radian(range_max_rad));
 }
 
 void addPlane(float plane_x, float plane_y, float plane_z, 

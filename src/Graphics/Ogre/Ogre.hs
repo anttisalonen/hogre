@@ -21,6 +21,7 @@ module Graphics.Ogre.Ogre(Vector3(..),
         Angle, Rotation(..), Color(..),
         ShadowTechnique(..),
         Light(..),
+        LightType(..),
         EntityType(..),
         Camera(..),
         Entity(..),
@@ -36,6 +37,7 @@ module Graphics.Ogre.Ogre(Vector3(..),
         clearScene,
         addLight,
         addEntity,
+        setLightPosition,
         setEntityPosition,
         renderOgre,
         cleanupOgre)
@@ -47,6 +49,7 @@ import CString
 -- C imports
 foreign import ccall "ogre.h init" c_init :: CFloat -> CFloat -> CFloat -> CInt -> CString -> CInt -> CString -> CFloat -> CFloat -> CFloat -> IO ()
 -- foreign import ccall "ogre.h newEntity" c_new_entity :: CString -> CString -> CInt -> IO ()
+foreign import ccall "ogre.h setLightPosition" c_set_light_position :: CString -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h setEntityPosition" c_set_entity_position :: CString -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h cleanup" c_cleanup :: IO ()
 foreign import ccall "ogre.h render" c_render :: IO ()
@@ -73,20 +76,29 @@ data Color = Color { r :: Float, g :: Float, b :: Float }
 
 -- Ogre-specific data types
 data ShadowTechnique = None
-                     | TextureModulative
                      | StencilModulative  -- ^ Note: as of 0.0.1, stencil shadows
                                           -- do not work when the window was created
                                           -- by SDL.
                      | StencilAdditive
+                     | TextureModulative
+                     | TextureAdditive
+                     | TextureAdditiveIntegrated
+                     | TextureModulativeIntegrated
     deriving (Eq, Show, Read, Enum)
 
-data Light = SpotLight { spotlightname     :: String
-                       , spotlightposition :: Vector3
-                       , diffuse           :: Color
-                       , specular          :: Color
-                       , direction         :: Vector3
-                       , range             :: (Angle, Angle)
-                       }
+data Light = Light { lightname :: String
+                   , diffuse   :: Color
+                   , specular  :: Color
+                   , lighttype :: LightType
+                   }
+    deriving (Eq, Show, Read)
+
+data LightType = PointLight       { plposition  :: Vector3 }
+               | DirectionalLight { dldirection :: Vector3 }
+               | SpotLight        { slposition  :: Vector3
+                                  , sldirection :: Vector3
+                                  , range       :: (Angle, Angle)
+                                  }
     deriving (Eq, Show, Read)
 
 -- | See <http://www.ogre3d.org/docs/api/html/classOgre_1_1Plane.html> and Ogre::MeshManager::createPlane: <http://www.ogre3d.org/docs/api/html/classOgre_1_1MeshManager.html>
@@ -160,6 +172,9 @@ unitY = Vector3 0.0 1.0 0.0
 unitZ :: Vector3
 unitZ = Vector3 0.0 0.0 1.0
 
+nullVector :: Vector3
+nullVector = Vector3 0.0 0.0 0.0
+
 negUnitX :: Vector3
 negUnitX = Vector3 (-1.0) 0.0 0.0
 
@@ -199,9 +214,27 @@ setupCamera (Camera look rol pos) = do
         (realToFrac rol)
 
 addLight :: Light -> IO ()
-addLight (SpotLight nam pos dif spec dir (rmin, rmax)) = do
+addLight (Light nam dif spec ltype) = do
+    let (t, pos, dir, rmin, rmax) = case ltype of
+          PointLight       lp                 -> (0, lp, nullVector, 0, 0)
+          DirectionalLight ld                 -> (1, nullVector, ld, 0, 0)
+          SpotLight        lp ld (lrmi, lrma) -> (2, lp, ld, lrmi, lrma)
     withCString nam $ \c_name -> do
-    c_add_light c_name 2 (realToFrac (r dif)) (realToFrac (g dif)) (realToFrac (b dif)) (realToFrac (r spec)) (realToFrac (g spec)) (realToFrac (b spec)) (realToFrac (x dir)) (realToFrac (y dir)) (realToFrac (z dir)) (realToFrac (x pos)) (realToFrac (y pos)) (realToFrac (z pos)) (realToFrac rmin) (realToFrac rmax)
+      c_add_light c_name t
+        (realToFrac (r dif)) 
+        (realToFrac (g dif)) 
+        (realToFrac (b dif)) 
+        (realToFrac (r spec)) 
+        (realToFrac (g spec)) 
+        (realToFrac (b spec)) 
+        (realToFrac (x dir)) 
+        (realToFrac (y dir)) 
+        (realToFrac (z dir)) 
+        (realToFrac (x pos)) 
+        (realToFrac (y pos)) 
+        (realToFrac (z pos)) 
+        (realToFrac rmin) 
+        (realToFrac rmax)
 
 addEntity :: Entity -> IO ()
 addEntity (Entity n pos t sh sc) = do
@@ -220,6 +253,11 @@ addEntity (Entity n pos t sh sc) = do
       Plane norm shif wid hei xseg yseg ut vt upv mat -> do
         withCString mat $ \c_material -> do
         c_add_plane (realToFrac (x norm)) (realToFrac (y norm)) (realToFrac (z norm)) (realToFrac (shif)) c_name (realToFrac (wid)) (realToFrac (hei)) (fromIntegral xseg) (fromIntegral (yseg)) (realToFrac (ut)) (realToFrac (vt)) (realToFrac (x upv)) (realToFrac (y upv)) (realToFrac (z upv)) (realToFrac (x pos)) (realToFrac (y pos)) (realToFrac (z pos)) c_material ((fromIntegral . fromEnum) sh)
+
+setLightPosition :: String    -- ^ Name of light
+                 -> Vector3   -- ^ New position
+                 -> IO ()
+setLightPosition n (Vector3 x_ y_ z_) = withCString n $ \cn -> c_set_light_position cn (realToFrac x_) (realToFrac y_) (realToFrac z_)
 
 setEntityPosition :: String    -- ^ Name of entity
                   -> Vector3   -- ^ New position
