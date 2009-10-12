@@ -48,6 +48,7 @@ module Graphics.Ogre.Ogre(Vector3(..),
         setLightVisible,
         setAmbientLight,
         setSkyDome,
+        setWorldGeometry,
         renderOgre,
         cleanupOgre)
 where
@@ -72,6 +73,7 @@ foreign import ccall "ogre.h translateEntity" c_translate_entity :: CString -> C
 foreign import ccall "ogre.h translateCamera" c_translate_camera :: CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h setLightVisible" c_set_light_visible :: CString -> CInt -> IO ()
 foreign import ccall "ogre.h setSkyDome" c_set_sky_dome :: CInt -> CString -> CFloat -> IO ()
+foreign import ccall "ogre.h setWorldGeometry" c_set_world_geometry :: CString -> IO ()
 foreign import ccall "ogre.h clearScene" c_clear_scene :: IO ()
 
 -- Primitive data types
@@ -328,6 +330,10 @@ setSkyDome :: Maybe (String, Float) -- ^ If Nothing, will disable sky dome.
            -> IO ()
 setSkyDome Nothing = withCString "" $ \cs -> c_set_sky_dome 0 cs 5
 setSkyDome (Just (n, curv)) = withCString n $ \cs -> c_set_sky_dome 1 cs (realToFrac curv)
+
+-- | See Ogre::SceneManager::setWorldGeometry().
+setWorldGeometry :: String -> IO ()
+setWorldGeometry s = withCString s $ \cs -> c_set_world_geometry cs
 
 -- | 'renderOgre' renders one frame.
 renderOgre :: IO ()

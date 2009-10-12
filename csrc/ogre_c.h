@@ -48,6 +48,7 @@ void translateEntity(const char* name, float x, float y, float z, int space);
 void translateCamera(float x, float y, float z);
 void setLightVisible(const char* name, int vis);
 void setSkyDome(int enabled, const char* texture, float curvature);
+void setWorldGeometry(const char* cfg);
 }
 
 #endif

@@ -176,6 +176,11 @@ void setSkyDome(int enabled, const char* texture, float curvature)
     gMgr->setSkyDome(enabled, texture, curvature);
 }
 
+void setWorldGeometry(const char* cfg)
+{
+    gMgr->setWorldGeometry(cfg);
+}
+
 int newEntity(const char* name, const char* model, int castshadows)
 {
     std::stringstream nname;
