@@ -49,7 +49,9 @@ module Graphics.Ogre.Ogre(Vector3(..),
         setAmbientLight,
         setSkyDome,
         setWorldGeometry,
+        setCameraPosition,
         getCameraPosition,
+        raySceneQuerySimple,
         renderOgre,
         cleanupOgre)
 where
@@ -78,7 +80,12 @@ foreign import ccall "ogre.h translateCamera" c_translate_camera :: CFloat -> CF
 foreign import ccall "ogre.h setLightVisible" c_set_light_visible :: CString -> CInt -> IO ()
 foreign import ccall "ogre.h setSkyDome" c_set_sky_dome :: CInt -> CString -> CFloat -> IO ()
 foreign import ccall "ogre.h setWorldGeometry" c_set_world_geometry :: CString -> IO ()
+foreign import ccall "ogre.h setCameraPosition" c_set_camera_position :: CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h getCameraPosition" c_get_camera_position :: Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> IO ()
+foreign import ccall "ogre.h raySceneQuerySimple" c_ray_scene_query_simple :: 
+   CFloat -> CFloat -> CFloat -> 
+   CFloat -> CFloat -> CFloat -> 
+   Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> IO Int
 foreign import ccall "ogre.h clearScene" c_clear_scene :: IO ()
 
 -- Primitive data types
@@ -340,6 +347,9 @@ setSkyDome (Just (n, curv)) = withCString n $ \cs -> c_set_sky_dome 1 cs (realTo
 setWorldGeometry :: String -> IO ()
 setWorldGeometry s = withCString s $ \cs -> c_set_world_geometry cs
 
+setCameraPosition :: Vector3 -> IO ()
+setCameraPosition v = withCVector v c_set_camera_position
+
 getCameraPosition :: IO Vector3
 getCameraPosition = alloca $ \x_ -> do
                     alloca $ \y_ -> do
@@ -349,6 +359,32 @@ getCameraPosition = alloca $ \x_ -> do
                     yy <- peek y_
                     zz <- peek z_
                     return (Vector3 (realToFrac xx) (realToFrac yy) (realToFrac zz))
+
+withCVector :: Vector3 -> (CFloat -> CFloat -> CFloat -> IO a) -> IO a
+withCVector (Vector3 xx yy zz) f = do
+    let x_ = realToFrac xx
+    let y_ = realToFrac yy
+    let z_ = realToFrac zz
+    f x_ y_ z_
+
+fromCVector :: CFloat -> CFloat -> CFloat -> Vector3
+fromCVector x_ y_ z_ = Vector3 (realToFrac x_) (realToFrac y_) (realToFrac z_)
+
+raySceneQuerySimple :: Vector3 -> Vector3 -> IO (Maybe Vector3)
+raySceneQuerySimple orig dir = 
+    alloca $ \resx -> do
+    alloca $ \resy -> do
+    alloca $ \resz -> do
+    withCVector orig $ \ox oy oz -> do
+    withCVector dir $ \dx dy dz  -> do
+    found <- c_ray_scene_query_simple ox oy oz dx dy dz resx resy resz
+    if found == 0
+      then return Nothing
+      else do
+             xx <- peek resx
+             yy <- peek resy
+             zz <- peek resz
+             return (Just (fromCVector xx yy zz))
 
 -- | 'renderOgre' renders one frame.
 renderOgre :: IO ()

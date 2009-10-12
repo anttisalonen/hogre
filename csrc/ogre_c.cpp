@@ -15,6 +15,7 @@ static SceneNode *gCamnode;
 static RenderWindow *gRenderWindow;
 static CEGUI::OgreCEGUIRenderer *gRenderer;
 static CEGUI::System *gSystem;
+static RaySceneQuery *gRaySceneQuery;
 
 // Local functions
 static void createRoot()
@@ -126,6 +127,7 @@ static void setupScene(int shadow_type, int manager_type)
             shadow_type == 4 ? SHADOWTYPE_TEXTURE_ADDITIVE : 
             shadow_type == 5 ? SHADOWTYPE_TEXTURE_ADDITIVE_INTEGRATED : 
                                SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
+    gRaySceneQuery = gMgr->createRayQuery(Ray());
 }
 
 // Exported functions
@@ -157,6 +159,14 @@ int init(int shadow_type, const char* res_filename, int autocreatewindow, const 
 // Miscellaneous functions
 int cleanup()
 {
+    std::cerr << "destroying query..." << std::endl;
+    gMgr->destroyQuery(gRaySceneQuery);
+    std::cerr << "destroying renderer..." << std::endl;
+    delete gRenderer;
+    std::cerr << "destroying system..." << std::endl;
+    delete gSystem;
+    std::cerr << "destroying root..." << std::endl;
+    delete gRoot;
     return 0;
 }
 
@@ -360,11 +370,38 @@ void setLightVisible(const char* name, int vis)
     gMgr->getLight(name)->setVisible(vis != 0);
 }
 
+void setCameraPosition(float x, float y, float z)
+{
+    gCam->setPosition(Vector3(x, y, z));
+}
+
 void getCameraPosition(float* x, float* y, float* z)
 {
     const Vector3& v = gCam->getPosition();
     *x = v.x;
     *y = v.y;
     *z = v.z;
+}
+
+int raySceneQuerySimple(float orig_x, float orig_y, float orig_z, 
+                float dir_x, float dir_y, float dir_z,
+                float* res_x, float* res_y, float* res_z)
+{
+    Ray ray(Vector3(orig_x, orig_y, orig_z), Vector3(dir_x, dir_y, dir_z));
+    gRaySceneQuery->setRay(ray);
+
+    // Perform the scene query
+    RaySceneQueryResult &result = gRaySceneQuery->execute();
+    RaySceneQueryResult::iterator itr = result.begin();
+
+    // Get the results
+    if (itr != result.end() && itr->worldFragment)
+    {
+        *res_x = itr->worldFragment->singleIntersection.x;
+        *res_y = itr->worldFragment->singleIntersection.y;
+        *res_z = itr->worldFragment->singleIntersection.z;
+        return 1;
+    }
+    return 0;
 }
 

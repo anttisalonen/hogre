@@ -49,7 +49,11 @@ void translateCamera(float x, float y, float z);
 void setLightVisible(const char* name, int vis);
 void setSkyDome(int enabled, const char* texture, float curvature);
 void setWorldGeometry(const char* cfg);
+void setCameraPosition(float x, float y, float z);
 void getCameraPosition(float* x, float* y, float* z);
+int raySceneQuerySimple(float orig_x, float orig_y, float orig_z, 
+                float dir_x, float dir_y, float dir_z,
+                float* res_x, float* res_y, float* res_z);
 }
 
 #endif
