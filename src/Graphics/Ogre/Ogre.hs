@@ -226,7 +226,7 @@ managerMaskFromEnum = foldl go 0
 -- | Initializes Ogre with given settings. This must be called before manipulating or rendering the scene.
 initOgre :: OgreSettings -> IO ()
 initOgre sett = do
-    let mgr_type = min 1 (managerMaskFromEnum (scenemanagertype sett))
+    let mgr_type = max 1 (managerMaskFromEnum (scenemanagertype sett))
     withCString (resourcefile sett) $ \c_res -> do
     withCString (caption sett) $ \c_caption -> do
     c_init ((fromIntegral . fromEnum) (shadowtechnique sett)) c_res ((fromIntegral . fromEnum) (autocreatewindow sett)) c_caption 0.0 0.0 0.0 mgr_type
