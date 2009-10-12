@@ -360,3 +360,11 @@ void setLightVisible(const char* name, int vis)
     gMgr->getLight(name)->setVisible(vis != 0);
 }
 
+void getCameraPosition(float* x, float* y, float* z)
+{
+    const Vector3& v = gCam->getPosition();
+    *x = v.x;
+    *y = v.y;
+    *z = v.z;
+}
+

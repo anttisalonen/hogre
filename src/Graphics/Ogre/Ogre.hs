@@ -49,11 +49,15 @@ module Graphics.Ogre.Ogre(Vector3(..),
         setAmbientLight,
         setSkyDome,
         setWorldGeometry,
+        getCameraPosition,
         renderOgre,
         cleanupOgre)
 where
 
 import CTypes
+import Foreign.Ptr
+import Foreign.Storable
+import Foreign.Marshal
 import CString
 
 -- C imports
@@ -74,6 +78,7 @@ foreign import ccall "ogre.h translateCamera" c_translate_camera :: CFloat -> CF
 foreign import ccall "ogre.h setLightVisible" c_set_light_visible :: CString -> CInt -> IO ()
 foreign import ccall "ogre.h setSkyDome" c_set_sky_dome :: CInt -> CString -> CFloat -> IO ()
 foreign import ccall "ogre.h setWorldGeometry" c_set_world_geometry :: CString -> IO ()
+foreign import ccall "ogre.h getCameraPosition" c_get_camera_position :: Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> IO ()
 foreign import ccall "ogre.h clearScene" c_clear_scene :: IO ()
 
 -- Primitive data types
@@ -334,6 +339,16 @@ setSkyDome (Just (n, curv)) = withCString n $ \cs -> c_set_sky_dome 1 cs (realTo
 -- | See Ogre::SceneManager::setWorldGeometry().
 setWorldGeometry :: String -> IO ()
 setWorldGeometry s = withCString s $ \cs -> c_set_world_geometry cs
+
+getCameraPosition :: IO Vector3
+getCameraPosition = alloca $ \x_ -> do
+                    alloca $ \y_ -> do
+                    alloca $ \z_ -> do
+                    c_get_camera_position x_ y_ z_
+                    xx <- peek x_
+                    yy <- peek y_
+                    zz <- peek z_
+                    return (Vector3 (realToFrac xx) (realToFrac yy) (realToFrac zz))
 
 -- | 'renderOgre' renders one frame.
 renderOgre :: IO ()
