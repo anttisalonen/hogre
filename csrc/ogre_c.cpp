@@ -114,11 +114,10 @@ static void setupCEGUI()
     gSystem = new CEGUI::System(gRenderer);
 }
 
-static void setupScene(float ambient_light_r, float ambient_light_g, float ambient_light_b, int shadow_type)
+static void setupScene(int shadow_type, int manager_type)
 {
-    gMgr = gRoot->createSceneManager(ST_GENERIC, scenemgrname);
+    gMgr = gRoot->createSceneManager(manager_type, scenemgrname);
 
-    gMgr->setAmbientLight(ColourValue( ambient_light_r, ambient_light_g, ambient_light_b) );
     gMgr->setShadowTechnique(
             shadow_type == 0 ? SHADOWTYPE_NONE : 
             shadow_type == 1 ? SHADOWTYPE_STENCIL_MODULATIVE : 
@@ -132,19 +131,21 @@ static void setupScene(float ambient_light_r, float ambient_light_g, float ambie
 // Exported functions
 
 // Initialization functions
-int init(float ambient_light_r, float ambient_light_g, float ambient_light_b, 
-        int shadow_type, const char* res_filename, int autocreatewindow, const char* title, 
-        float bg_r, float bg_g, float bg_b)
+int init(int shadow_type, const char* res_filename, int autocreatewindow, const char* title, 
+        float bg_r, float bg_g, float bg_b, int manager_type)
 {
+    std::cerr << "!!! creating root" << std::endl;
     createRoot();
+    std::cerr << "!!! defining resources" << std::endl;
     defineResources(res_filename);
+    std::cerr << "!!! setting up render system" << std::endl;
     setupRenderSystem();
     std::cerr << "!!! creating render window" << std::endl;
     createRenderWindow(autocreatewindow, title);
     std::cerr << "!!! init resource groups" << std::endl;
     initializeResourceGroups();
     std::cerr << "!!! setup scene" << std::endl;
-    setupScene(ambient_light_r, ambient_light_g, ambient_light_b, shadow_type);
+    setupScene(shadow_type, manager_type);
     std::cerr << "!!! init camera" << std::endl;
     initCamera(bg_r, bg_g, bg_b);
     std::cerr << "!!! setting up cegui" << std::endl;
@@ -165,6 +166,16 @@ int render()
 }
 
 // Manipulation functions
+void setAmbientLight(float ambient_light_r, float ambient_light_g, float ambient_light_b)
+{
+    gMgr->setAmbientLight(ColourValue( ambient_light_r, ambient_light_g, ambient_light_b) );
+}
+
+void setSkyDome(int enabled, const char* texture, float curvature)
+{
+    gMgr->setSkyDome(enabled, texture, curvature);
+}
+
 int newEntity(const char* name, const char* model, int castshadows)
 {
     std::stringstream nname;

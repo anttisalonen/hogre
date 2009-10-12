@@ -28,6 +28,7 @@ module Graphics.Ogre.Ogre(Vector3(..),
         Entity(..),
         OgreSettings(..),
         OgreScene(..),
+        SceneManagerType(..),
         halfPI,
         degToRad,
         unitX, unitY, unitZ,
@@ -45,6 +46,8 @@ module Graphics.Ogre.Ogre(Vector3(..),
         translateEntity,
         translateCamera,
         setLightVisible,
+        setAmbientLight,
+        setSkyDome,
         renderOgre,
         cleanupOgre)
 where
@@ -53,8 +56,8 @@ import CTypes
 import CString
 
 -- C imports
-foreign import ccall "ogre.h init" c_init :: CFloat -> CFloat -> CFloat -> CInt -> CString -> CInt -> CString -> CFloat -> CFloat -> CFloat -> IO ()
--- foreign import ccall "ogre.h newEntity" c_new_entity :: CString -> CString -> CInt -> IO ()
+foreign import ccall "ogre.h init" c_init :: CInt -> CString -> CInt -> CString -> CFloat -> CFloat -> CFloat -> CInt -> IO ()
+foreign import ccall "ogre.h setAmbientLight" c_set_ambient_light :: CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h setLightPosition" c_set_light_position :: CString -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h setEntityPosition" c_set_entity_position :: CString -> CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h cleanup" c_cleanup :: IO ()
@@ -68,6 +71,7 @@ foreign import ccall "ogre.h rotateCamera" c_rotate_camera :: CFloat -> CFloat -
 foreign import ccall "ogre.h translateEntity" c_translate_entity :: CString -> CFloat -> CFloat -> CFloat -> CInt -> IO ()
 foreign import ccall "ogre.h translateCamera" c_translate_camera :: CFloat -> CFloat -> CFloat -> IO ()
 foreign import ccall "ogre.h setLightVisible" c_set_light_visible :: CString -> CInt -> IO ()
+foreign import ccall "ogre.h setSkyDome" c_set_sky_dome :: CInt -> CString -> CFloat -> IO ()
 foreign import ccall "ogre.h clearScene" c_clear_scene :: IO ()
 
 -- Primitive data types
@@ -151,6 +155,13 @@ data Entity = Entity { name        :: String
                      }
     deriving (Eq, Show, Read)
 
+data SceneManagerType = Generic
+                      | ExteriorClose
+                      | ExteriorFar
+                      | ExteriorRealFar
+                      | Interior
+    deriving (Eq, Show, Read)
+
 -- Main Ogre data types
 -- | General, scene-wide Ogre settings. Main configuration structure for Ogre.
 data OgreSettings = OgreSettings { resourcefile     :: FilePath          -- ^ Path to resources.cfg.
@@ -162,6 +173,7 @@ data OgreSettings = OgreSettings { resourcefile     :: FilePath          -- ^ Pa
                                  , caption          :: String            -- ^ Window caption.
                                  , ambientlight     :: Color
                                  , shadowtechnique  :: ShadowTechnique
+                                 , scenemanagertype :: [SceneManagerType]
                                  }
     deriving (Eq, Show, Read)
 
@@ -200,14 +212,27 @@ negUnitY = Vector3 0.0 (-1.0) 0.0
 negUnitZ :: Vector3
 negUnitZ = Vector3 0.0 0.0 (-1.0)
 
+managerMaskFromEnum :: [SceneManagerType] -> CInt
+managerMaskFromEnum = foldl go 0
+    where go acc s = acc + go' s
+          go' Generic          = 1
+          go' ExteriorClose    = 2
+          go' ExteriorFar      = 4
+          go' ExteriorRealFar  = 8
+          go' Interior         = 16
+
 -- | Initializes Ogre with given settings. This must be called before manipulating or rendering the scene.
 initOgre :: OgreSettings -> IO ()
 initOgre sett = do
-    let amb = ambientlight sett
+    let mgr_type = min 1 (managerMaskFromEnum (scenemanagertype sett))
     withCString (resourcefile sett) $ \c_res -> do
     withCString (caption sett) $ \c_caption -> do
-    c_init (realToFrac (r amb)) (realToFrac (g amb)) (realToFrac (b amb)) ((fromIntegral . fromEnum) (shadowtechnique sett)) c_res ((fromIntegral . fromEnum) (autocreatewindow sett)) c_caption 0.0 0.0 0.0
+    c_init ((fromIntegral . fromEnum) (shadowtechnique sett)) c_res ((fromIntegral . fromEnum) (autocreatewindow sett)) c_caption 0.0 0.0 0.0 mgr_type
+    setAmbientLight (ambientlight sett)
     setupCamera defaultCamera
+
+setAmbientLight :: Color -> IO ()
+setAmbientLight (Color r_ g_ b_) = c_set_ambient_light (realToFrac r_) (realToFrac g_) (realToFrac b_)
 
 clearScene :: IO ()
 clearScene = c_clear_scene
@@ -294,6 +319,15 @@ translateCamera (Vector3 x_ y_ z_) = c_translate_camera (realToFrac x_) (realToF
 
 setLightVisible :: String -> Bool -> IO ()
 setLightVisible n v = withCString n $ \cn -> c_set_light_visible cn ((fromIntegral . fromEnum) v)
+
+-- | See Ogre::SceneManager::setSkyDome().
+setSkyDome :: Maybe (String, Float) -- ^ If Nothing, will disable sky dome. 
+                                    -- Otherwise, String refers to the 
+                                    -- material name. Float defines the
+                                    -- curvature. 
+           -> IO ()
+setSkyDome Nothing = withCString "" $ \cs -> c_set_sky_dome 0 cs 5
+setSkyDome (Just (n, curv)) = withCString n $ \cs -> c_set_sky_dome 1 cs (realToFrac curv)
 
 -- | 'renderOgre' renders one frame.
 renderOgre :: IO ()

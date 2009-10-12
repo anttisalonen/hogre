@@ -7,9 +7,9 @@
 
 extern "C" 
 {
-int init(float ambient_light_r, float ambient_light_g, float ambient_light_b, 
-        int shadow_type, const char* res_filename, int autocreatewindow, const char* title,
-        float bg_r, float bg_g, float bg_b);
+int init(int shadow_type, const char* res_filename, int autocreatewindow, const char* title,
+        float bg_r, float bg_g, float bg_b, int manager_type);
+void setAmbientLight(float ambient_light_r, float ambient_light_g, float ambient_light_b);
 int newEntity(const char* name, const char* model, int castshadows);
 void setEntityPosition(const char* name, float x, float y, float z);
 int cleanup();
@@ -47,6 +47,7 @@ void rotateCamera(float yaw, float pitch, float roll, int space);
 void translateEntity(const char* name, float x, float y, float z, int space);
 void translateCamera(float x, float y, float z);
 void setLightVisible(const char* name, int vis);
+void setSkyDome(int enabled, const char* texture, float curvature);
 }
 
 #endif
