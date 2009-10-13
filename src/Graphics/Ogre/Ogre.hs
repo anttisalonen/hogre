@@ -52,6 +52,7 @@ module Graphics.Ogre.Ogre(Vector3(..),
         setCameraPosition,
         getCameraPosition,
         raySceneQuerySimple,
+        raySceneQueryMouseSimple,
         renderOgre,
         cleanupOgre)
 where
@@ -85,6 +86,9 @@ foreign import ccall "ogre.h getCameraPosition" c_get_camera_position :: Ptr CFl
 foreign import ccall "ogre.h raySceneQuerySimple" c_ray_scene_query_simple :: 
    CFloat -> CFloat -> CFloat -> 
    CFloat -> CFloat -> CFloat -> 
+   Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> IO Int
+foreign import ccall "ogre.h raySceneQueryMouseSimple" c_ray_scene_query_mouse_simple :: 
+   CFloat -> CFloat -> 
    Ptr CFloat -> Ptr CFloat -> Ptr CFloat -> IO Int
 foreign import ccall "ogre.h clearScene" c_clear_scene :: IO ()
 
@@ -370,7 +374,11 @@ withCVector (Vector3 xx yy zz) f = do
 fromCVector :: CFloat -> CFloat -> CFloat -> Vector3
 fromCVector x_ y_ z_ = Vector3 (realToFrac x_) (realToFrac y_) (realToFrac z_)
 
-raySceneQuerySimple :: Vector3 -> Vector3 -> IO (Maybe Vector3)
+-- | Creates a ray scene query.
+raySceneQuerySimple :: Vector3 -- ^ Origin of ray
+                    -> Vector3 -- ^ Direction of ray
+                    -> IO (Maybe Vector3) -- ^ Point where ray intersects 
+                                          --   something, or Nothing if not found
 raySceneQuerySimple orig dir = 
     alloca $ \resx -> do
     alloca $ \resy -> do
@@ -378,6 +386,28 @@ raySceneQuerySimple orig dir =
     withCVector orig $ \ox oy oz -> do
     withCVector dir $ \dx dy dz  -> do
     found <- c_ray_scene_query_simple ox oy oz dx dy dz resx resy resz
+    if found == 0
+      then return Nothing
+      else do
+             xx <- peek resx
+             yy <- peek resy
+             zz <- peek resz
+             return (Just (fromCVector xx yy zz))
+
+-- | Creates a ray scene query based on given mouse coordinates.
+raySceneQueryMouseSimple :: Float -- ^ X-coordinate (width) of the ray origin
+                                  --   on screen, between 0 (left) 
+                                  --   and 1 (right).
+                         -> Float -- ^ Y-coordinate (height) of the ray origin
+                                  --   on screen, between 0 (top)
+                                  --   and 1 (bottom).
+                         -> IO (Maybe Vector3) -- ^ Point where ray intersects
+                                               --   something, or Nothing if not found
+raySceneQueryMouseSimple xpos ypos = 
+    alloca $ \resx -> do
+    alloca $ \resy -> do
+    alloca $ \resz -> do
+    found <- c_ray_scene_query_mouse_simple (realToFrac xpos) (realToFrac ypos) resx resy resz
     if found == 0
       then return Nothing
       else do

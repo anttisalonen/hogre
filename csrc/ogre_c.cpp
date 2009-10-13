@@ -405,3 +405,23 @@ int raySceneQuerySimple(float orig_x, float orig_y, float orig_z,
     return 0;
 }
 
+int raySceneQueryMouseSimple (float xpos, float ypos, float* res_x, float* res_y, float* res_z)
+{
+    Ray mouseRay = gCam->getCameraToViewportRay(xpos, ypos);
+    gRaySceneQuery->setRay(mouseRay);
+
+    // Execute query
+    RaySceneQueryResult &result = gRaySceneQuery->execute();
+    RaySceneQueryResult::iterator itr = result.begin();
+
+    // Get the results
+    if (itr != result.end() && itr->worldFragment)
+    {
+        *res_x = itr->worldFragment->singleIntersection.x;
+        *res_y = itr->worldFragment->singleIntersection.y;
+        *res_z = itr->worldFragment->singleIntersection.z;
+        return 1;
+    }
+    return 0;
+}
+

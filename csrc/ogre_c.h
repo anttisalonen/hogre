@@ -54,6 +54,8 @@ void getCameraPosition(float* x, float* y, float* z);
 int raySceneQuerySimple(float orig_x, float orig_y, float orig_z, 
                 float dir_x, float dir_y, float dir_z,
                 float* res_x, float* res_y, float* res_z);
+int raySceneQueryMouseSimple (float xpos, float ypos, 
+                float* res_x, float* res_y, float* res_z);
 }
 
 #endif
