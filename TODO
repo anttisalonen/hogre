@@ -1,0 +1,5 @@
+-In addition to raySceneQuerySimple, add raySceneQuery which returns [Either Vector3 String]
+  - List of intersections with world and entities - entity names by getMovableType() and getName()
+-SkyPlanes and SkyBoxes
+-Fog
+-Differentiate between Entities and StaticGeometry
