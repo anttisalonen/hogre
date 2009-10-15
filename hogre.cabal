@@ -4,20 +4,25 @@ Cabal-Version:      >= 1.2
 License:            OtherLicense
 License-File:       LICENSE
 Author:             Antti Salonen<ajsalonen at gmail dot com>
+Maintainer:         Antti Salonen<ajsalonen at gmail dot com>
 Copyright:          Antti Salonen 2009
 Stability:          Unstable
 Category:           Graphics
-Synopsis:           Very primitive binding to OGRE
+Synopsis:           Haskell binding to a subset of OGRE
 description:        This package contains bindings to a subset of OGRE
                     (Object-Oriented Graphics Rendering Engine)
                     (<http://www.ogre3d.org/>).
 Build-type:         Simple
-extra-source-files: csrc/*
+extra-source-files: csrc/ogre_c.cpp, csrc/ogre_c.h, TODO
+
+source-repository head
+  type:      git
+  location:  http://github.com/anttisalonen/hogre
 
 Library
   Build-Depends:     base, haskell98
   Hs-Source-Dirs:    src
-  Ghc-options:       -Wall -O2
+  Ghc-options:       -Wall
   cc-options:        -Wall -O2
   c-sources:         csrc/ogre_c.cpp
   pkgconfig-depends: OGRE, CEGUI, CEGUI-OGRE
