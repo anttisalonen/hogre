@@ -1,13 +1,13 @@
--- | This module includes the necessary functionality for using OGRE from
---   Haskell. Note that you need OGRE and CEGUI libraries and headers.
+-- | This module allows simple OGRE usage from Haskell.
+--   Note that you need OGRE and CEGUI libraries and headers.
 --   Currently, only OGRE version 1.7.0dev-unstable (Cthugha) has been tested.
 --   Usage for a simple scene creation:
 --
---   1. Create the settings structure 'OgreSettings'.
+--   1. Define the settings structure 'OgreSettings'.
 --
 --   2. Define your scene by building up an 'OgreScene'.
 --
---   3. call 'initOgre' using your OgreSettings.
+--   3. call 'initOgre' with your OgreSettings as the parameter.
 --
 --   4. add your scene using 'addScene'.
 --
@@ -135,12 +135,17 @@ data LightType = PointLight       { plposition  :: Vector3 }
                | DirectionalLight { dldirection :: Vector3 }
                | SpotLight        { slposition  :: Vector3
                                   , sldirection :: Vector3
-                                  , range       :: (Angle, Angle)
+                                  , range       :: (Angle, Angle)      -- ^ Angle in radians
                                   }
     deriving (Eq, Show, Read)
 
--- | See <http://www.ogre3d.org/docs/api/html/classOgre_1_1Plane.html> and Ogre::MeshManager::createPlane: <http://www.ogre3d.org/docs/api/html/classOgre_1_1MeshManager.html>
-data EntityType = Plane { normal      :: Vector3
+-- | For Plane parameters, see OGRE documentation at
+-- <http://www.ogre3d.org/docs/api/html/classOgre_1_1Plane.html> and 
+-- Ogre::MeshManager::createPlane: <http://www.ogre3d.org/docs/api/html/classOgre_1_1MeshManager.html>
+data EntityType = StdMesh { mesh        :: String 
+                          , rotation    :: Rotation
+                          }
+                | Plane { normal      :: Vector3
                         , shift       :: Float
                         , width       :: Float
                         , height      :: Float
@@ -151,9 +156,6 @@ data EntityType = Plane { normal      :: Vector3
                         , upvector    :: Vector3
                         , material    :: String
                         }
-                | StdMesh { mesh        :: String 
-                          , rotation    :: Rotation
-                          }
     deriving (Eq, Show, Read)
 
 data Camera = Camera { lookat      :: Vector3
@@ -165,9 +167,10 @@ data Camera = Camera { lookat      :: Vector3
 defaultCamera :: Camera
 defaultCamera = Camera (Vector3 1.0 0.0 0.0) 0 (Vector3 0.0 0.0 0.0)
 
-data Entity = Entity { name        :: String
+data Entity = Entity { name        :: String      -- ^ Unique identifier for the 
+                                                  --   entity.
                      , position    :: Vector3
-                     , entitytype  :: EntityType
+                     , entitytype  :: EntityType  -- ^ EntityType is usually a mesh.
                      , castshadows :: Bool
                      , scale       :: Vector3
                      }
@@ -191,7 +194,9 @@ data OgreSettings = OgreSettings { resourcefile     :: FilePath          -- ^ Pa
                                  , caption          :: String            -- ^ Window caption.
                                  , ambientlight     :: Color
                                  , shadowtechnique  :: ShadowTechnique
-                                 , scenemanagertype :: [SceneManagerType]
+                                 , scenemanagertype :: [SceneManagerType] -- ^ Flags for the scene manager.
+                                                                          --   Most scenes only need to set 
+                                                                          --   Generic as type.
                                  }
     deriving (Eq, Show, Read)
 
