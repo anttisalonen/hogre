@@ -1,6 +1,6 @@
 Name:               hogre
 Version:            0.0.1
-Cabal-Version:      >= 1.2
+Cabal-Version:      >= 1.6
 License:            OtherLicense
 License-File:       LICENSE
 Author:             Antti Salonen<ajsalonen at gmail dot com>
