@@ -20,7 +20,7 @@ source-repository head
   location:  http://github.com/anttisalonen/hogre
 
 Library
-  Build-Depends:     base, haskell98
+  Build-Depends:     base >= 3 && < 5, haskell98
   Hs-Source-Dirs:    src
   Ghc-options:       -Wall
   cc-options:        -Wall -O2
