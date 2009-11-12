@@ -2,8 +2,6 @@
 #define __AA_OGRE_H
 
 #include <OGRE/Ogre.h>
-#include <CEGUI/CEGUI.h>
-#include <OGRE/OgreCEGUIRenderer.h>
 
 extern "C" 
 {

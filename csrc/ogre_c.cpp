@@ -13,8 +13,6 @@ static SceneManager *gMgr;
 static Camera *gCam;
 static SceneNode *gCamnode;
 static RenderWindow *gRenderWindow;
-static CEGUI::OgreCEGUIRenderer *gRenderer;
-static CEGUI::System *gSystem;
 static RaySceneQuery *gRaySceneQuery;
 
 // Local functions
@@ -88,31 +86,23 @@ static void initializeResourceGroups()
 
 static void initCamera(float bg_r, float bg_g, float bg_b)
 {
-    std::cerr << "create camera" << std::endl;
+    std::cerr << "hogre: create camera" << std::endl;
     gCam = gMgr->createCamera("Camera");
-    std::cerr << "add viewport" << std::endl;
+    std::cerr << "hogre: add viewport" << std::endl;
     // Viewport *vp = gRoot->getAutoCreatedWindow()->addViewport(gCam);
     Viewport *vp = gRenderWindow->addViewport(gCam);
 
-    std::cerr << "set background color" << std::endl;
+    std::cerr << "hogre: set background color" << std::endl;
     vp->setBackgroundColour(ColourValue(bg_r, bg_g, bg_b));
-    std::cerr << "set clip" << std::endl;
+    std::cerr << "hogre: set clip" << std::endl;
     gCam->setNearClipDistance(0.5);
-    std::cerr << "set ratio" << std::endl;
+    std::cerr << "hogre: set ratio" << std::endl;
     gCam->setAutoAspectRatio(true);
 
-    std::cerr << "create node" << std::endl;
+    std::cerr << "hogre: create node" << std::endl;
     gCamnode = gMgr->getRootSceneNode()->createChildSceneNode(camnodename);
-    std::cerr << "attach" << std::endl;
+    std::cerr << "hogre: attach" << std::endl;
     gCamnode->attachObject(gCam);
-}
-
-static void setupCEGUI()
-{
-    // RenderWindow *win = gRoot->getAutoCreatedWindow();
-
-    gRenderer = new CEGUI::OgreCEGUIRenderer(gRenderWindow, RENDER_QUEUE_OVERLAY, false, 3000, gMgr);
-    gSystem = new CEGUI::System(gRenderer);
 }
 
 static void setupScene(int shadow_type, int manager_type)
@@ -136,36 +126,30 @@ static void setupScene(int shadow_type, int manager_type)
 int init(int shadow_type, const char* res_filename, int autocreatewindow, const char* title, 
         float bg_r, float bg_g, float bg_b, int manager_type)
 {
-    std::cerr << "!!! creating root" << std::endl;
+    std::cerr << "hogre: creating root" << std::endl;
     createRoot();
-    std::cerr << "!!! defining resources" << std::endl;
+    std::cerr << "hogre: defining resources" << std::endl;
     defineResources(res_filename);
-    std::cerr << "!!! setting up render system" << std::endl;
+    std::cerr << "hogre: setting up render system" << std::endl;
     setupRenderSystem();
-    std::cerr << "!!! creating render window" << std::endl;
+    std::cerr << "hogre: creating render window" << std::endl;
     createRenderWindow(autocreatewindow, title);
-    std::cerr << "!!! init resource groups" << std::endl;
+    std::cerr << "hogre: init resource groups" << std::endl;
     initializeResourceGroups();
-    std::cerr << "!!! setup scene" << std::endl;
+    std::cerr << "hogre: setup scene" << std::endl;
     setupScene(shadow_type, manager_type);
-    std::cerr << "!!! init camera" << std::endl;
+    std::cerr << "hogre: init camera" << std::endl;
     initCamera(bg_r, bg_g, bg_b);
-    std::cerr << "!!! setting up cegui" << std::endl;
-    setupCEGUI();
-    std::cerr << "!!! finished" << std::endl;
+    std::cerr << "hogre: finished" << std::endl;
     return 0;
 }
 
 // Miscellaneous functions
 int cleanup()
 {
-    std::cerr << "destroying query..." << std::endl;
+    std::cerr << "hogre: destroying query..." << std::endl;
     gMgr->destroyQuery(gRaySceneQuery);
-    std::cerr << "destroying renderer..." << std::endl;
-    delete gRenderer;
-    std::cerr << "destroying system..." << std::endl;
-    delete gSystem;
-    std::cerr << "destroying root..." << std::endl;
+    std::cerr << "hogre: destroying root..." << std::endl;
     delete gRoot;
     return 0;
 }
