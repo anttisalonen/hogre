@@ -14,10 +14,9 @@ information.
 
 Installation
 
-1. Install OGRE and CEGUI C++ libraries on your system. Consult your OS on 
+1. Install OGRE C++ libraries on your system. Consult your OS on 
 how to do this. For Debian and Debian-like Linuxes, something like 
-"sudo aptitude install libogre-dev libceguiogre-dev libcegui-mk2-dev"
-should do.
+"sudo aptitude install libogre-dev" should do.
 
 2. As hogre consists not only of Haskell code but also C++ code and a C
 header in order to bind OGRE, you need not only a Haskell compiler but also
@@ -39,9 +38,6 @@ Currently there is no exception handling, which means incorrect use (e.g.
 not calling init or trying to access a non-existing entity will lead to an
 error report and crash. As long as nothing illegal is done, everything's fine.
 I'm planning on adding exception handling.
-
-hogre depends on CEGUI even though it is not being used at the moment; I'm
-planning on removing this dependency.
 
 I'm not quite sure how portable it is; it should work on any platform OGRE
 runs on (Linux, Mac OS X, Windows), and should work on any Haskell compiler 
