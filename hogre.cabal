@@ -26,7 +26,7 @@ Library
   Ghc-options:       -Wall
   cc-options:        -Wall
   c-sources:         csrc/ogre_c.cpp
-  pkgconfig-depends: OGRE, CEGUI, CEGUI-OGRE
-  extra-libraries:   CEGUIOgreRenderer, OgreMain, CEGUIBase
+  pkgconfig-depends: OGRE
+  extra-libraries:   OgreMain
   exposed-modules:   Graphics.Ogre.Ogre
 
