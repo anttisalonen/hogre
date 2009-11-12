@@ -7,6 +7,7 @@ Author:             Antti Salonen<ajsalonen at gmail dot com>
 Maintainer:         Antti Salonen<ajsalonen at gmail dot com>
 Copyright:          Antti Salonen 2009
 Stability:          Unstable
+Homepage:           http://github.com/anttisalonen/hogre
 Category:           Graphics
 Synopsis:           Haskell binding to a subset of OGRE
 description:        This package contains bindings to a subset of OGRE
@@ -17,7 +18,7 @@ extra-source-files: csrc/ogre_c.cpp, csrc/ogre_c.h, TODO
 
 source-repository head
   type:      git
-  location:  http://github.com/anttisalonen/hogre
+  location:  git://github.com/anttisalonen/hogre.git
 
 Library
   Build-Depends:     base >= 3 && < 5, haskell98
