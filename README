@@ -1,1 +1,62 @@
-For documentation, see http://finder.homelinux.org/haskell/hogre-doc
+hogre 0.0.1
+
+For API documentation, see http://finder.homelinux.org/haskell/hogre-doc
+
+Introduction
+
+hogre is a Haskell FFI binding to a subset of OGRE (www.ogre3d.org).
+
+License
+
+hogre is licensed under MIT. OGRE is licensed under LGPL for versions before
+1.7.0 and under MIT for 1.7.0 and later. See the OGRE website for more 
+information.
+
+Installation
+
+1. Install OGRE and CEGUI C++ libraries on your system. Consult your OS on 
+how to do this. For Debian and Debian-like Linuxes, something like 
+"sudo aptitude install libogre-dev libceguiogre-dev libcegui-mk2-dev"
+should do.
+
+2. As hogre consists not only of Haskell code but also C++ code and a C
+header in order to bind OGRE, you need not only a Haskell compiler but also
+a C++ compiler which the Haskell compiler should use. Only GHC with GNU g++
+has been tested, which seems to work without problems as long as both 
+compilers are installed.
+
+3. The usual cabal configure [--user] && cabal build && cabal install.
+
+4. OGRE does only graphics; for input, audio, networking etc. you need
+separate libraries. You're free to choose which (if any).
+
+5. You may want to check out the hogre-examples package for some examples
+at http://github.com/anttisalonen/hogre-examples.
+
+Known issues and bugs
+
+Currently there is no exception handling, which means incorrect use (e.g.
+not calling init or trying to access a non-existing entity will lead to an
+error report and crash. As long as nothing illegal is done, everything's fine.
+I'm planning on adding exception handling.
+
+hogre depends on CEGUI even though it is not being used at the moment; I'm
+planning on removing this dependency.
+
+I'm not quite sure how portable it is; it should work on any platform OGRE
+runs on (Linux, Mac OS X, Windows), and should work on any Haskell compiler 
+that does FFI and knows how to invoke a C++ compiler. That doesn't leave much
+choice, I guess. It also shouldn't matter which C++ compiler is being used.
+
+On my tests it seems that the file ogre.cfg is not allowed to exist when
+initialising OGRE and letting OGRE create its own window, otherwise nothing
+will be drawn. It seems to me this is an OGRE bug, though.
+
+I don't really know why it works at all; apparently GHC figures out from the
+file name extension that the C++ files should be compiled with a C++ compiler.
+If you have some better way to do this, do let me know.
+
+Contact
+
+Email: ajsalonen at gmail dot com
+
