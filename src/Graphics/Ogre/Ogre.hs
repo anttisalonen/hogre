@@ -1,6 +1,7 @@
 -- | This module allows simple OGRE usage from Haskell.
---   Note that you need OGRE and CEGUI libraries and headers.
---   Currently, only OGRE version 1.7.0dev-unstable (Cthugha) has been tested.
+--   Note that you need OGRE libraries and headers.
+--   Tested with OGRE version 1.7.0dev-unstable (Cthugha) and 1.6.4 
+--   (Shoggoth).
 --   Usage for a simple scene creation:
 --
 --   1. Define the settings structure 'OgreSettings'.
