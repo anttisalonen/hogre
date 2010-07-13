@@ -1,0 +1,47 @@
+@exclude
+^_.*
+getShadowVolumeRenderableIterator
+.*Listener
+getResourceDeclarationList
+
+# returns a String, which is converted to char* -> error.
+getErrorDescription
+getSetting
+writeContentsToTimestampedFile
+validateConfigOptions
+
+# private class as parameter type.
+resourceExists
+resourceModifiedTime
+
+@header
+OGRE/Ogre.h
+
+@rename
+# These may be defined twice, once in types.h, once in
+# OGRE namespace. Resolve conflict.
+uint|unsigned int
+ulong|unsigned long
+ushort|unsigned short
+
+# Superclass typedefs.
+ResourceCreateOrRetrieveResult|std::pair<ResourcePtr, bool>
+TransformSpace|Node::TransformSpace
+DebugRenderable|Node::DebugRenderable
+WorldFragmentType|SceneQuery::WorldFragmentType
+
+# OGRE typedefs.
+Real|float
+uchar|unsigned char
+
+# Implicit coercion.
+String|char*
+
+@exclude-class
+# Abstract class based on superclass.
+AxisAlignedBoxSceneQuery
+PlaneBoundedVolumeListSceneQuery
+SphereSceneQuery
+
+.*Listener
+

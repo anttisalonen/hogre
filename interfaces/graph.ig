@@ -1,0 +1,4 @@
+@exclude
+AxisAlignedBoxSceneQuery
+PlaneBoundedVolumeListSceneQuery
+SphereSceneQuery
