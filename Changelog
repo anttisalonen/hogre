@@ -1,5 +1,5 @@
-0.0.3 - ????-??-??
-- Small corrections to documentation
+0.1.0 - 2010-??-??
+- Rewrite the bindings using cgen
 
 0.0.2 - 2009-11-12
 - Correct git URL
