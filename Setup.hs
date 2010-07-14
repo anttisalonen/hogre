@@ -1,5 +1,6 @@
 import System.IO
 import System.Exit
+import System.Directory
 import System.FilePath
 import Control.Applicative
 import Control.Monad
@@ -10,11 +11,12 @@ import Distribution.Simple.Program
 import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.Setup
 import Distribution.Verbosity
+import Distribution.Version
+import qualified Distribution.ModuleName
 
 main = defaultMainWithHooks $ simpleUserHooks
   {
-    hookedPrograms = [simpleProgram "cgen", simpleProgram "cgen-hs"]
-  , buildHook = testBuildHook
+   buildHook = testBuildHook
   }
 
 err :: String -> IO a
@@ -36,6 +38,20 @@ getProgram src pname = do
                       "If you've installed the program, make sure the program is in your PATH."
     Just loc -> return $ ConfiguredProgram pname Nothing [] (FoundOnSystem loc)
 
+getFiles :: String -> FilePath -> IO [FilePath]
+getFiles ext dir = 
+  map (dir </>) <$> filter (\f -> takeExtension f == (extSeparator:ext)) <$> getDirectoryContents dir
+
+resDir :: String -> FilePath
+resDir n = "res" </> n
+
+resCgen = resDir "cgen"
+resCgenHs = resDir "cgen-hs"
+resLib = resDir "lib"
+
+graphFile = resDir "graph" </> "graph.txt"
+clibFile = resLib </> "libobre-c.a"
+
 testBuildHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> BuildFlags -> IO ()
 testBuildHook pd lb uh bf = do
   iffile   <- getSrcFile pd "if"
@@ -43,6 +59,10 @@ testBuildHook pd lb uh bf = do
   hiffile  <- getSrcFile pd "hif"
   listfile <- getSrcFile pd "list"
   cgen <- getProgram "Hackage" "cgen"
+  grgen <- getProgram "Hackage" "grgen"
+  cgenhs <- getProgram "Hackage" "cgen-hs"
+  gpp <- getProgram "your distribution (Linux) or http://www.mingw.org/ (Windows)" "g++"
+  ar <- getProgram "your distribution (Linux) or http://www.mingw.org/ (Windows)" "ar"
   pkgconfig <- getProgram "http://pkg-config.freedesktop.org/" "pkg-config"
   headerlist <- lines <$> readFile listfile
   mogreincpath <- (filter (\w -> take 2 w == "-I") . words) <$> getProgramOutput normal pkgconfig ["--cflags", "OGRE"]
@@ -50,6 +70,29 @@ testBuildHook pd lb uh bf = do
     []    -> err "Could not find OGRE include path with pkg-config - make sure OGRE is installed and pkg-config configured."
     (x:_) -> do
       let ogreincpath = drop 2 x
-      runProgram normal cgen (["-o", "res", "--interface", iffile, "--include", ogreincpath] ++ headerlist)
-      (buildHook simpleUserHooks) pd lb uh bf
+      runProgram normal cgen (["-o", resCgen, "--interface", iffile, "--include", ogreincpath] ++ headerlist)
+      runProgram normal grgen (["--interface", igfile, "--include", ogreincpath, "-o", graphFile] ++ headerlist)
+      headerfiles <- getFiles "h" resCgen
+      cppfiles    <- getFiles "cpp" resCgen
+      runProgram normal cgenhs (["--interface", hiffile, "-u", "HOgre.hs", "--inherit", graphFile, "-o", resCgenHs] ++ headerfiles)
+      runProgram normal gpp ("-c":"-O2":cppfiles)
+      objfiles    <- getFiles "o" resCgen
+      genhsfiles  <- getFiles "hs" resCgenHs
+      createDirectoryIfMissing True resLib
+      runProgram normal ar ("q":clibFile:objfiles)
+      let expmodulenames = ["HOgre", "Types"] -- TODO: move from top level
+          expModules = map Distribution.ModuleName.fromString expmodulenames
+          libbuildinfo = BuildInfo True [] [] [] [] 
+                                   [(Dependency (PackageName "OgreMain")
+                                               (laterVersion (Version [1,8] [])))]
+                                   [] [] [resCgenHs] 
+                                   (map Distribution.ModuleName.fromString $ 
+                                               filter (\e -> e `notElem` expmodulenames) (map takeBaseName genhsfiles))
+                                   [] ["OgreMain"] [] [] [] [] [] [] [] []
+                                   [Dependency (PackageName "base") 
+                                               (intersectVersionRanges (orLaterVersion (Version [3] [])) 
+                                                                       (earlierVersion (Version [5] []))),
+                                    Dependency (PackageName "haskell98") anyVersion]
+      let pd' = pd{library = Just (Library expModules True libbuildinfo)}
+      (buildHook simpleUserHooks) pd' lb uh bf
 
