@@ -18,7 +18,8 @@ import qualified Distribution.ModuleName
 
 main = defaultMainWithHooks $ simpleUserHooks
   {
-   buildHook = testBuildHook
+    buildHook = ogreBuildHook
+  , instHook  = ogreInstHook
   }
 
 err :: String -> IO a
@@ -53,7 +54,6 @@ resCgenHs = resCgenHsBase</>"Graphics"</>"Ogre"
 resLib = resDir "lib"
 
 graphFile = resDir "graph" </> "graph.txt"
-clibFile = resLib </> "libobre-c.a"
 
 inDir :: FilePath -> IO () -> IO ()
 inDir path act = bracket getCwd putCwd (\_ -> setCurrentDirectory path >> act)
@@ -72,8 +72,26 @@ pathToModuleName = Distribution.ModuleName.fromString . intercalate "." . splitB
 fullModuleName :: String -> Distribution.ModuleName.ModuleName
 fullModuleName s = Distribution.ModuleName.fromString $ "Graphics.Ogre." ++ s
 
-testBuildHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> BuildFlags -> IO ()
-testBuildHook pd lb uh bf = do
+mkLibrary :: IO Library
+mkLibrary = do
+  genhsmodulenames <- map takeBaseName <$> getFiles "hs" resCgenHs
+  cppfiles         <- getFiles "cpp" resCgen
+  let expModules = map fullModuleName ["HOgre", "Types"]
+      libbuildinfo = BuildInfo True [] [] [] [] 
+                               [(Dependency (PackageName "OgreMain")
+                                           (laterVersion (Version [1,8] [])))]
+                               [] cppfiles [resCgenHsBase] 
+                               (filter (`notElem` expModules) 
+                                           (map fullModuleName genhsmodulenames))
+                               [] ["OgreMain"] [] [] [] [] [] [] [] []
+                               [Dependency (PackageName "base") 
+                                           (intersectVersionRanges (orLaterVersion (Version [3] [])) 
+                                                                   (earlierVersion (Version [5] []))),
+                                Dependency (PackageName "haskell98") anyVersion]
+  return $ Library expModules True libbuildinfo
+      
+ogreBuildHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> BuildFlags -> IO ()
+ogreBuildHook pd lb uh bf = do
   iffile   <- getSrcFile pd "if"
   igfile   <- getSrcFile pd "ig"
   hiffile  <- getSrcFile pd "hif"
@@ -81,8 +99,6 @@ testBuildHook pd lb uh bf = do
   cgen <- getProgram "Hackage" "cgen"
   grgen <- getProgram "Hackage" "grgen"
   cgenhs <- getProgram "Hackage" "cgen-hs"
-  gpp <- getProgram "your distribution (Linux) or http://www.mingw.org/ (Windows)" "g++"
-  ar <- getProgram "your distribution (Linux) or http://www.mingw.org/ (Windows)" "ar"
   pkgconfig <- getProgram "http://pkg-config.freedesktop.org/" "pkg-config"
   headerlist <- lines <$> readFile listfile
   mogreincpath <- (filter (\w -> take 2 w == "-I") . words) <$> getProgramOutput normal pkgconfig ["--cflags", "OGRE"]
@@ -93,25 +109,13 @@ testBuildHook pd lb uh bf = do
       runProgram normal cgen (["-o", resCgen, "--interface", iffile, "--include", ogreincpath] ++ headerlist)
       runProgram normal grgen (["--interface", igfile, "--include", ogreincpath, "-o", graphFile] ++ headerlist)
       headerfiles <- getFiles "h" resCgen
-      cppfiles    <- getFiles "cpp" resCgen
       runProgram normal cgenhs (["--interface", hiffile, "-u", "HOgre.hs", "--hierarchy", "Graphics.Ogre.", "--inherit", graphFile, "-o", resCgenHs] ++ headerfiles)
-      inDir resCgen $ runProgram normal gpp ("-c":"-O2":(map takeFileName cppfiles))
-      objfiles    <- getFiles "o" resCgen
-      genhsmodulenames <- map takeBaseName <$> getFiles "hs" resCgenHs
       createDirectoryIfMissing True resLib
-      runProgram normal ar ("q":clibFile:objfiles)
-      let expModules = map fullModuleName ["HOgre", "Types"]
-          libbuildinfo = BuildInfo True [] [] [] [] 
-                                   [(Dependency (PackageName "OgreMain")
-                                               (laterVersion (Version [1,8] [])))]
-                                   [] [] [resCgenHsBase] 
-                                   (filter (`notElem` expModules) 
-                                               (map fullModuleName genhsmodulenames))
-                                   [] ["OgreMain"] [] [] [] [] [] [] [] []
-                                   [Dependency (PackageName "base") 
-                                               (intersectVersionRanges (orLaterVersion (Version [3] [])) 
-                                                                       (earlierVersion (Version [5] []))),
-                                    Dependency (PackageName "haskell98") anyVersion]
-      let pd' = pd{library = Just (Library expModules True libbuildinfo)}
-      (buildHook simpleUserHooks) pd' lb uh bf
+      lib <- mkLibrary
+      (buildHook simpleUserHooks) pd{library = Just lib} lb uh bf
+
+ogreInstHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> InstallFlags -> IO ()
+ogreInstHook pd lb uh ifl = do
+  lib <- mkLibrary
+  (instHook simpleUserHooks) pd{library = Just lib} lb uh ifl
 
