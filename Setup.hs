@@ -4,6 +4,8 @@ import System.Directory
 import System.FilePath
 import Control.Applicative
 import Control.Monad
+import Control.Exception(bracket)
+import Data.List
 
 import Distribution.PackageDescription
 import Distribution.Simple
@@ -46,11 +48,29 @@ resDir :: String -> FilePath
 resDir n = "res" </> n
 
 resCgen = resDir "cgen"
-resCgenHs = resDir "cgen-hs"
+resCgenHsBase = resDir "cgen-hs"
+resCgenHs = resCgenHsBase</>"Graphics"</>"Ogre"
 resLib = resDir "lib"
 
 graphFile = resDir "graph" </> "graph.txt"
 clibFile = resLib </> "libobre-c.a"
+
+inDir :: FilePath -> IO () -> IO ()
+inDir path act = bracket getCwd putCwd (\_ -> setCurrentDirectory path >> act)
+  where getCwd = getCurrentDirectory
+        putCwd = setCurrentDirectory
+
+pathToModuleName :: FilePath -> Distribution.ModuleName.ModuleName
+pathToModuleName = Distribution.ModuleName.fromString . intercalate "." . splitBy isPathSeparator
+  where splitBy :: (Char -> Bool) -> String -> [String]
+        splitBy fun str = 
+          let (w1, rest) = break fun str
+          in if null rest
+               then if null w1 then [] else [w1]
+               else w1 : splitBy fun (tail rest)
+
+fullModuleName :: String -> Distribution.ModuleName.ModuleName
+fullModuleName s = Distribution.ModuleName.fromString $ "Graphics.Ogre." ++ s
 
 testBuildHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> BuildFlags -> IO ()
 testBuildHook pd lb uh bf = do
@@ -74,20 +94,19 @@ testBuildHook pd lb uh bf = do
       runProgram normal grgen (["--interface", igfile, "--include", ogreincpath, "-o", graphFile] ++ headerlist)
       headerfiles <- getFiles "h" resCgen
       cppfiles    <- getFiles "cpp" resCgen
-      runProgram normal cgenhs (["--interface", hiffile, "-u", "HOgre.hs", "--inherit", graphFile, "-o", resCgenHs] ++ headerfiles)
-      runProgram normal gpp ("-c":"-O2":cppfiles)
+      runProgram normal cgenhs (["--interface", hiffile, "-u", "HOgre.hs", "--hierarchy", "Graphics.Ogre.", "--inherit", graphFile, "-o", resCgenHs] ++ headerfiles)
+      inDir resCgen $ runProgram normal gpp ("-c":"-O2":(map takeFileName cppfiles))
       objfiles    <- getFiles "o" resCgen
-      genhsfiles  <- getFiles "hs" resCgenHs
+      genhsmodulenames <- map takeBaseName <$> getFiles "hs" resCgenHs
       createDirectoryIfMissing True resLib
       runProgram normal ar ("q":clibFile:objfiles)
-      let expmodulenames = ["HOgre", "Types"] -- TODO: move from top level
-          expModules = map Distribution.ModuleName.fromString expmodulenames
+      let expModules = map fullModuleName ["HOgre", "Types"]
           libbuildinfo = BuildInfo True [] [] [] [] 
                                    [(Dependency (PackageName "OgreMain")
                                                (laterVersion (Version [1,8] [])))]
-                                   [] [] [resCgenHs] 
-                                   (map Distribution.ModuleName.fromString $ 
-                                               filter (\e -> e `notElem` expmodulenames) (map takeBaseName genhsfiles))
+                                   [] [] [resCgenHsBase] 
+                                   (filter (`notElem` expModules) 
+                                               (map fullModuleName genhsmodulenames))
                                    [] ["OgreMain"] [] [] [] [] [] [] [] []
                                    [Dependency (PackageName "base") 
                                                (intersectVersionRanges (orLaterVersion (Version [3] [])) 
