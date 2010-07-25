@@ -18,8 +18,10 @@ import qualified Distribution.ModuleName
 
 main = defaultMainWithHooks $ simpleUserHooks
   {
-    buildHook = ogreBuildHook
-  , instHook  = ogreInstHook
+    buildHook   = ogreBuildHook
+  , instHook    = ogreInstHook
+  , cleanHook   = ogreCleanHook
+  , haddockHook = ogreHaddockHook
   }
 
 err :: String -> IO a
@@ -45,8 +47,11 @@ getFiles :: String -> FilePath -> IO [FilePath]
 getFiles ext dir = 
   map (dir </>) <$> filter (\f -> takeExtension f == (extSeparator:ext)) <$> getDirectoryContents dir
 
+resRoot :: String
+resRoot = "res"
+
 resDir :: String -> FilePath
-resDir n = "res" </> n
+resDir n = resRoot </> n
 
 resCgen = resDir "cgen"
 resCgenHsBase = resDir "cgen-hs"
@@ -118,4 +123,13 @@ ogreInstHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> InstallFlag
 ogreInstHook pd lb uh ifl = do
   lib <- mkLibrary
   (instHook simpleUserHooks) pd{library = Just lib} lb uh ifl
+
+ogreCleanHook pd n uh cf = do
+    exists <- doesDirectoryExist resRoot
+    when exists (removeDirectoryRecursive resRoot)
+    (cleanHook simpleUserHooks) pd n uh cf
+
+ogreHaddockHook pd lb uh hf = do
+    lib <- mkLibrary
+    (haddockHook simpleUserHooks) pd{library = Just lib} lb uh hf
 
