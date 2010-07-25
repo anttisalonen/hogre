@@ -24,3 +24,5 @@ OgreRenderWindow.h
 OgreRenderTarget.h
 OgreColourValue.h
 OgreWindowEventUtilities.h
+GLX/OgreTimerImp.h
+OgreAnimationState.h
