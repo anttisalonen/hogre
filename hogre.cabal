@@ -5,13 +5,14 @@ License:            MIT
 License-File:       LICENSE
 Author:             Antti Salonen<ajsalonen at gmail dot com>
 Maintainer:         Antti Salonen<ajsalonen at gmail dot com>
-Copyright:          Antti Salonen 2010
-Stability:          Unstable
-Homepage:           http://github.com/anttisalonen/hogre
+Copyright:          (c) 2010 Antti Salonen
+Stability:          Experimental
+Homepage:           http://anttisalonen.github.com/hogre
+Bug-reports:        http://github.com/anttisalonen/hogre/issues
 Category:           Graphics
 Synopsis:           Haskell binding to a subset of OGRE
-description:        This package contains bindings to a subset of OGRE
-                    (Object-Oriented Graphics Rendering Engine)
+Description:        This package contains Haskell bindings to a subset of 
+                    OGRE (Object-Oriented Graphics Rendering Engine)
                     (<http://www.ogre3d.org/>).
 Build-type:         Custom
 Extra-source-files: headers/ogre.list,
