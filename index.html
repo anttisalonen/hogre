@@ -2,98 +2,98 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-        <title>anttisalonen/hogre @ GitHub</title>
+		<title>anttisalonen/hogre @ GitHub</title>
 
-        <style type="text/css">
-            body {
-                margin-top: 1.0em;
-                background-color: #f0fff2;
-                font-family: "Helvetica,Arial,FreeSans";
-                color: #000000;
-            }
-            #container {
-                margin: 0 auto;
-                width: 700px;
-            }
-            h1 { font-size: 3.8em; color: #0f000d; margin-bottom: 3px; }
-            h1 .small { font-size: 0.4em; }
-            h1 a { text-decoration: none }
-            h2 { font-size: 1.5em; color: #0f000d; }
-            h3 { text-align: center; color: #0f000d; }
-            a { color: #0f000d; }
-            .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-            .download { float: right; }
-            pre { background: #000; color: #fff; padding: 15px;}
-            hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-            .footer { text-align:center; padding-top:30px; font-style: italic; }
-        </style>
+		<style type="text/css">
+			body {
+				margin-top: 1.0em;
+				background-color: #f0fff2;
+				font-family: "Helvetica,Arial,FreeSans";
+				color: #000000;
+			}
+			#container {
+				margin: 0 auto;
+				width: 700px;
+			}
+			h1 { font-size: 3.8em; color: #0f000d; margin-bottom: 3px; }
+			h1 .small { font-size: 0.4em; }
+			h1 a { text-decoration: none }
+			h2 { font-size: 1.5em; color: #0f000d; }
+			h3 { text-align: center; color: #0f000d; }
+			a { color: #0f000d; }
+			.description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+			.download { float: right; }
+			pre { background: #000; color: #fff; padding: 15px;}
+			hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+			.footer { text-align:center; padding-top:30px; font-style: italic; }
+		</style>
 
-    </head>
+	</head>
 
-    <body>
-        <a href="http://github.com/anttisalonen/hogre"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+	<body>
+		<a href="http://github.com/anttisalonen/hogre"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
 
-        <div id="container">
+		<div id="container">
 
-            <div class="download">
-                <a href="http://github.com/anttisalonen/hogre/zipball/master">
-                    <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-                <a href="http://github.com/anttisalonen/hogre/tarball/master">
-                    <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-            </div>
+			<div class="download">
+				<a href="http://github.com/anttisalonen/hogre/zipball/master">
+					<img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
+				<a href="http://github.com/anttisalonen/hogre/tarball/master">
+					<img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
+			</div>
 
-            <h1><a href="http://github.com/anttisalonen/hogre">hogre</a>
-            </h1>
+			<h1><a href="http://github.com/anttisalonen/hogre">hogre</a>
+			</h1>
 
-            <div class="description">
-                Haskell binding to OGRE
-            </div>
+			<div class="description">
+				<p>Haskell binding to OGRE</p>
+			</div>
 
-            <p>hogre is a Haskell FFI binding to a subset of OGRE.<br/>
-            </p><h2>Dependencies</h2>
-            <p><a href="http://www.ogre3d.org">OGRE</a></p>
-            <h2>Install</h2>
-            <p>1. Install OGRE C++ libraries on your system. Consult your OS on how to do this. For Debian and Debian-like Linuxes, something like "sudo aptitude install libogre-dev" should do.<br/>
-            <br/>
-            2. Install cgen, a program for generating C++ binding for Haskell, which is needed by hogre. You can download the <a href="http://github.com/anttisalonen/cgen">cgen source at github</a> or install it from Hackage using cabal.<br/>
-            <br/>
-            3. As hogre generates a C interface to OGRE and compiles it, you need a C++ compiler - on Debian and Debian-like distributions, "sudo aptitude install build-essential" should do.<br/>
-            <br/>
-            4. cabal configure [--user] &amp;&amp; cabal build &amp;&amp; cabal install.<br/>
-            Note 1: At least using cabal version 1.8.0.2 the build step is actually unnecessary - hogre will be built during install phase.<br/>
-            Note 2: building hogre may take quite a while because of compiling C++. During this cabal will print no output. To see the build progress, use "cabal install -v2".<br/>
-            <br/>
-            5. OGRE does only graphics; for input, audio, networking etc. you need separate libraries. You're free to choose which (if any).<br/>
-            <br/>
-            6. You may want to check out the <a href="http://github.com/anttisalonen/hogre-example"/>hogre-examples</a> package for some examples.<br/>
-            </p>
-            <h2>License</h2>
-            <p>hogre is licensed under MIT. OGRE is licensed under LGPL for versions before 1.7.0 and under MIT for 1.7.0 and later. See the OGRE website for more information.<br/>
-            </p>
-            <h2>Authors</h2>
-            <p>Antti Salonen (ajsalonen@gmail.com)</p>
+			<p>hogre is a Haskell FFI binding to a subset of OGRE.<br/>
+			</p><h2>Dependencies</h2>
+			<p><a href="http://www.ogre3d.org">OGRE</a></p>
+			<h2>Install</h2>
+			<p>1. Install OGRE C++ libraries on your system. Consult your OS on how to do this. For Debian and Debian-like Linuxes, something like "sudo aptitude install libogre-dev" should do.<br/>
+			<br/>
+			2. Install <a href="http://anttisalonen.github.com/cgen"/>cgen</a>, a program for generating C++ binding for Haskell, which is needed by hogre. You can download the <a href="http://github.com/anttisalonen/cgen">cgen source at github</a> or install it from Hackage using cabal.<br/>
+			<br/>
+			3. As hogre generates a C interface to OGRE and compiles it, you need a C++ compiler - on Debian and Debian-like distributions, "sudo aptitude install build-essential" should do.<br/>
+			<br/>
+			4. cabal configure [--user] &amp;&amp; cabal build &amp;&amp; cabal install.<br/>
+			Note 1: At least using cabal version 1.8.0.2 the build step is actually unnecessary - hogre will be built during install phase.<br/>
+			Note 2: building hogre may take quite a while because of compiling C++. During this cabal will print no output. To see the build progress, use "cabal install -v2".<br/>
+			<br/>
+			5. OGRE does only graphics; for input, audio, networking etc. you need separate libraries. You're free to choose which (if any).<br/>
+			<br/>
+			6. You may want to check out the <a href="http://github.com/anttisalonen/hogre-example"/>hogre-examples</a> package for some examples.<br/>
+			</p>
+			<h2>License</h2>
+			<p>hogre is licensed under MIT. OGRE is licensed under LGPL for versions before 1.7.0 and under MIT for 1.7.0 and later. See the OGRE website for more information.<br/>
+			</p>
+			<h2>Authors</h2>
+			<p>Antti Salonen (ajsalonen@gmail.com)</p>
 
 
-            <h2>Download</h2>
-            <p>
-            You can download this project in either
-            <a href="http://github.com/anttisalonen/hogre/zipball/master">zip</a> or
-            <a href="http://github.com/anttisalonen/hogre/tarball/master">tar</a> formats.
-            </p>
-            <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-            by running:
+			<h2>Download</h2>
+			<p>
+			You can download this project in either
+			<a href="http://github.com/anttisalonen/hogre/zipball/master">zip</a> or
+			<a href="http://github.com/anttisalonen/hogre/tarball/master">tar</a> formats.
+			</p>
+			<p>You can also clone the project with <a href="http://git-scm.com">Git</a>
+			by running:
       <pre>$ git clone git://github.com/anttisalonen/hogre</pre>
-            </p>
+			</p>
 
-            <div class="footer">
-                get the source code on GitHub : <a href="http://github.com/anttisalonen/hogre">anttisalonen/hogre</a>
-            </div>
+			<div class="footer">
+				get the source code on GitHub : <a href="http://github.com/anttisalonen/hogre">anttisalonen/hogre</a>
+			</div>
 
-        </div>
+		</div>
 
 
-    </body>
+	</body>
 </html>
