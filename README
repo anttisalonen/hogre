@@ -18,7 +18,7 @@ Installation
 how to do this. For Debian and Debian-like Linuxes, something like 
 "sudo aptitude install libogre-dev" should do.
 
-2. Install cgen, a program for generating C++ binding for Haskell, which is
+2. Install cgen, a program for generating C++ bindings for Haskell, which is
 needed by hogre. You can download the cgen source at github 
 (http://github.com/anttisalonen/cgen) or install it from Hackage using cabal.
 
