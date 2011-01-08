@@ -24,7 +24,7 @@ OgreRenderWindow.h
 OgreRenderTarget.h
 OgreColourValue.h
 OgreWindowEventUtilities.h
-GLX/OgreTimerImp.h
+WIN32/OgreTimerImp.h
 OgreAnimationState.h
-GLX/OgreConfigDialogImp.h
-GLX/OgreErrorDialogImp.h
+WIN32/OgreConfigDialogImp.h
+WIN32/OgreErrorDialogImp.h

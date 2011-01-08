@@ -15,9 +15,9 @@ resourceExists
 resourceModifiedTime
 
 @header
-OGRE/Ogre.h
-OGRE/GLX/OgreConfigDialogImp.h
-OGRE/GLX/OgreErrorDialogImp.h
+Ogre.h
+WIN32/OgreConfigDialogImp.h
+WIN32/OgreErrorDialogImp.h
 
 @rename
 # These may be defined twice, once in types.h, once in

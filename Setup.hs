@@ -12,6 +12,7 @@ import Distribution.Simple
 import Distribution.Simple.Program
 import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.Setup
+import Distribution.System
 import Distribution.Verbosity
 import Distribution.Version
 import qualified Distribution.ModuleName
@@ -77,10 +78,11 @@ pathToModuleName = Distribution.ModuleName.fromString . intercalate "." . splitB
 fullModuleName :: String -> Distribution.ModuleName.ModuleName
 fullModuleName s = Distribution.ModuleName.fromString $ "Graphics.Ogre." ++ s
 
-mkLibrary :: IO Library
-mkLibrary = do
+mkLibrary :: LocalBuildInfo -> IO Library
+mkLibrary lb = do
   genhsmodulenames <- map takeBaseName <$> getFiles "hs" resCgenHs
   cppfiles         <- getFiles "cpp" resCgen
+  includepaths     <- getIncludePaths lb
   let expModules = map fullModuleName ["HOgre", "Types"]
       libbuildinfo = BuildInfo True [] [] [] [] 
                                [(Dependency (PackageName "OgreMain")
@@ -88,40 +90,72 @@ mkLibrary = do
                                [] cppfiles [resCgenHsBase] 
                                (filter (`notElem` expModules) 
                                            (map fullModuleName genhsmodulenames))
-                               [] ["OgreMain"] [] [] [] [] [] [] [] []
+                               [] ["OgreMain"] [] includepaths [] [] [] [] [] []
                                [Dependency (PackageName "base") 
                                            (intersectVersionRanges (orLaterVersion (Version [3] [])) 
                                                                    (earlierVersion (Version [5] []))),
                                 Dependency (PackageName "haskell98") anyVersion]
   return $ Library expModules True libbuildinfo
-      
+
+getConfiguredIncludePaths :: LocalBuildInfo -> [String]
+getConfiguredIncludePaths lb = 
+  case library (localPkgDescr lb) of
+    Nothing -> []
+    Just l  -> includeDirs (libBuildInfo l)
+
+getIncludePaths :: LocalBuildInfo -> IO [String]
+getIncludePaths lb = do
+  let defincludepaths = getConfiguredIncludePaths lb
+  case buildOS of
+    Windows -> return defincludepaths
+    _       -> do
+       pkgconfig    <- getProgram "http://pkg-config.freedesktop.org/" "pkg-config"
+       mogreincpath <- (filter (\w -> take 2 w == "-I") . words) <$> getProgramOutput normal pkgconfig ["--cflags", "OGRE"]
+       case mogreincpath of
+         [] -> do
+                 putStrLn "Warning: Could not find OGRE include path with pkg-config - will assume"
+                 putStrLn "         the OGRE headers are in the default include path. If the"
+                 putStrLn "         compilation fails, try installing pkg-config and make sure that"
+                 putStrLn "         OGRE is installed and pkg-config correctly configured."
+                 putStrLn "         Alternatively, use the cabal --extra-include-dirs option."
+                 return defincludepaths
+         (x:_) -> return $ [drop 2 x]
+
 ogreBuildHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> BuildFlags -> IO ()
 ogreBuildHook pd lb uh bf = do
-  iffile   <- getSrcFile pd "if"
+  geniffile <- getSrcFile pd "if"
+  winiffile <- getSrcFile pd "if_win"
   igfile   <- getSrcFile pd "ig"
   hiffile  <- getSrcFile pd "hif"
   listfile <- getSrcFile pd "list"
+  winlistfile <- getSrcFile pd "list_win"
   cgen <- getProgram "Hackage" "cgen"
   grgen <- getProgram "Hackage" "grgen"
   cgenhs <- getProgram "Hackage" "cgen-hs"
-  pkgconfig <- getProgram "http://pkg-config.freedesktop.org/" "pkg-config"
-  headerlist <- lines <$> readFile listfile
-  mogreincpath <- (filter (\w -> take 2 w == "-I") . words) <$> getProgramOutput normal pkgconfig ["--cflags", "OGRE"]
-  case mogreincpath of
-    []    -> err "Could not find OGRE include path with pkg-config - make sure OGRE is installed and pkg-config configured."
-    (x:_) -> do
-      let ogreincpath = drop 2 x
-      runProgram normal cgen (["-o", resCgen, "--interface", iffile, "--include", ogreincpath] ++ headerlist)
-      runProgram normal grgen (["--interface", igfile, "--include", ogreincpath, "-o", graphFile] ++ headerlist)
-      headerfiles <- getFiles "h" resCgen
-      runProgram normal cgenhs (["--interface", hiffile, "-u", "HOgre.hs", "--hierarchy", "Graphics.Ogre.", "--inherit", graphFile, "-o", resCgenHs] ++ headerfiles)
-      createDirectoryIfMissing True resLib
-      lib <- mkLibrary
-      (buildHook simpleUserHooks) pd{library = Just lib} lb uh bf
+  let headerlistfile = case buildOS of
+                         Windows -> winlistfile
+                         _       -> listfile
+  let iffile = case buildOS of
+                         Windows -> winiffile
+                         _       -> geniffile
+  headerlist <- lines <$> readFile headerlistfile
+  includepaths <- getIncludePaths lb
+  let includepath = case includepaths of
+                      []    -> ""
+                      (x:_) -> x
+  when (not $ null includepath) $ putStrLn $ "Searching for OGRE headers in: " ++ includepath
+  let includesetup = if null includepath then [] else ["--include", includepath]
+  runProgram normal cgen (["-o", resCgen, "--interface", iffile] ++ includesetup ++ headerlist)
+  runProgram normal grgen (["--interface", igfile] ++ includesetup ++ ["-o", graphFile] ++ headerlist)
+  headerfiles <- getFiles "h" resCgen
+  runProgram normal cgenhs (["--interface", hiffile, "-u", "HOgre.hs", "--hierarchy", "Graphics.Ogre.", "--inherit", graphFile, "-o", resCgenHs] ++ headerfiles)
+  createDirectoryIfMissing True resLib
+  lib <- mkLibrary lb
+  (buildHook simpleUserHooks) pd{library = Just lib} lb uh bf
 
 ogreInstHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> InstallFlags -> IO ()
 ogreInstHook pd lb uh ifl = do
-  lib <- mkLibrary
+  lib <- mkLibrary lb
   (instHook simpleUserHooks) pd{library = Just lib} lb uh ifl
 
 ogreCleanHook pd n uh cf = do
@@ -130,6 +164,6 @@ ogreCleanHook pd n uh cf = do
     (cleanHook simpleUserHooks) pd n uh cf
 
 ogreHaddockHook pd lb uh hf = do
-    lib <- mkLibrary
+    lib <- mkLibrary lb
     (haddockHook simpleUserHooks) pd{library = Just lib} lb uh hf
 

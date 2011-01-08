@@ -16,7 +16,9 @@ Description:        This package contains Haskell bindings to a subset of
                     (<http://www.ogre3d.org/>).
 Build-type:         Custom
 Extra-source-files: headers/ogre.list,
+                    headers/ogre.list_win,
                     interfaces/ogre.if,
+                    interfaces/ogre.if_win,
                     interfaces/ogre.hif,
                     interfaces/graph.ig
 
@@ -28,6 +30,7 @@ Library
   Build-Depends:     base >= 3 && < 5, haskell98
   Ghc-options:       -Wall
   cc-options:        -Wall
-  pkgconfig-depends: OGRE
+  if !os(windows)
+      pkgconfig-depends: OGRE
   extra-libraries:   OgreMain
 
