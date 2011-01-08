@@ -15,9 +15,11 @@ resourceExists
 resourceModifiedTime
 
 @header
-OGRE/Ogre.h
-OGRE/GLX/OgreConfigDialogImp.h
+# TODO: reverse the ordering once cgen generates the
+# header includes in the correct order
 OGRE/GLX/OgreErrorDialogImp.h
+OGRE/GLX/OgreConfigDialogImp.h
+OGRE/Ogre.h
 
 @rename
 # These may be defined twice, once in types.h, once in

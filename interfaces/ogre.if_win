@@ -15,9 +15,11 @@ resourceExists
 resourceModifiedTime
 
 @header
-Ogre.h
-WIN32/OgreConfigDialogImp.h
+# TODO: reverse the ordering once cgen generates the
+# header includes in the correct order
 WIN32/OgreErrorDialogImp.h
+WIN32/OgreConfigDialogImp.h
+Ogre.h
 
 @rename
 # These may be defined twice, once in types.h, once in
