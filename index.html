@@ -64,9 +64,18 @@
 			<br/>
 			3. As hogre generates a C interface to OGRE and compiles it, you need a C++ compiler - on Debian and Debian-like distributions, "sudo aptitude install build-essential" should do.<br/>
 			<br/>
-			4. cabal configure [--user] &amp;&amp; cabal build &amp;&amp; cabal install.<br/>
+			4. (Linux/Unix):<br/>cabal configure [--user] &amp;&amp; cabal build &amp;&amp; cabal install<br/><br/>
+			pkg-config is used for determining the correct include and library paths.<br/><br/>
 			Note 1: At least using cabal version 1.8.0.2 the build step is actually unnecessary - hogre will be built during install phase.<br/>
-			Note 2: building hogre may take quite a while because of compiling C++. During this cabal will print no output. To see the build progress, use "cabal install -v2".<br/>
+			Note 2: building hogre may take quite a while because of compiling C++. During this cabal will print no output. To see the build progress, use "cabal install -v2".<br/><br/>
+			4. (Windows):<br/>cabal configure [--user] &amp;&amp; cabal install
+			[--extra-include-dirs=c:\path\to\include\OGRE]
+			[--extra-lib-dirs=c:\path\to\OGRE\lib\release]<br/><br/>
+			The extra include and library directories must be supplied in case
+			the OGRE headers and libraries are not in the standard include and library
+			search path. Also, the Boost C++ headers must be found in the
+			include path. The OGRE include path must be the first include
+			path supplied.<br/>
 			<br/>
 			5. OGRE does only graphics; for input, audio, networking etc. you need separate libraries. You're free to choose which (if any).<br/>
 			<br/>
