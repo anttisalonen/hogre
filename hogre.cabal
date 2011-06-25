@@ -33,4 +33,5 @@ Library
   if !os(windows)
       pkgconfig-depends: OGRE
   extra-libraries:   OgreMain
+  build-tools:       cgen, grgen, cgen-hs
 

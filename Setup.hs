@@ -23,6 +23,9 @@ main = defaultMainWithHooks $ simpleUserHooks
   , instHook    = ogreInstHook
   , cleanHook   = ogreCleanHook
   , haddockHook = ogreHaddockHook
+  , hookedPrograms = [simpleProgram "cgen",
+                      simpleProgram "grgen",
+                      simpleProgram "cgen-hs"]
   }
 
 err :: String -> IO a
@@ -34,15 +37,6 @@ getSrcFile pd ext = do
   case files of
     [file] -> return file
     files  -> err $ "Error in extra source files configuration: Exactly one file with the extension \"" ++ ext ++ "\" allowed. Found:\n\t" ++ show files
-
-getProgram :: String -> String -> IO ConfiguredProgram
-getProgram src pname = do
-  mloc <- findProgramLocation normal pname
-  case mloc of
-    Nothing  -> err $ "Could not find program \"" ++ pname ++ "\".\n" ++ 
-                      "Try installing the program from " ++ src ++ ".\n" ++ 
-                      "If you've installed the program, make sure the program is in your PATH."
-    Just loc -> return $ ConfiguredProgram pname Nothing [] (FoundOnSystem loc)
 
 getFiles :: String -> FilePath -> IO [FilePath]
 getFiles ext dir = 
@@ -84,17 +78,23 @@ mkLibrary lb = do
   cppfiles         <- getFiles "cpp" resCgen
   includepaths     <- getIncludePaths lb
   let expModules = map fullModuleName ["HOgre", "Types"]
-      libbuildinfo = BuildInfo True [] [] [] [] 
-                               [(Dependency (PackageName "OgreMain")
-                                           (laterVersion (Version [1,8] [])))]
-                               [] cppfiles [resCgenHsBase] 
-                               (filter (`notElem` expModules) 
-                                           (map fullModuleName genhsmodulenames))
-                               [] ["OgreMain"] [] includepaths [] [] [] [] [] []
-                               [Dependency (PackageName "base") 
+      libbuildinfo = emptyBuildInfo { buildable          = True,
+                                      pkgconfigDepends   = 
+                                          [(Dependency (PackageName "OgreMain")
+                                               (laterVersion (Version [1,8] [])))],
+                                      cSources           = cppfiles,
+                                      hsSourceDirs       = [resCgenHsBase],
+                                      otherModules       = 
+                                          (filter (`notElem` expModules) 
+                                               (map fullModuleName genhsmodulenames)),
+                                      extraLibs          = ["OgreMain"],
+                                      includeDirs        = includepaths,
+                                      targetBuildDepends =
+                                         [Dependency (PackageName "base") 
                                            (intersectVersionRanges (orLaterVersion (Version [3] [])) 
                                                                    (earlierVersion (Version [5] []))),
-                                Dependency (PackageName "haskell98") anyVersion]
+                                          Dependency (PackageName "haskell98") anyVersion]
+                                     }
   return $ Library expModules True libbuildinfo
 
 getConfiguredIncludePaths :: LocalBuildInfo -> [String]
@@ -109,7 +109,7 @@ getIncludePaths lb = do
   case buildOS of
     Windows -> return defincludepaths
     _       -> do
-       pkgconfig    <- getProgram "http://pkg-config.freedesktop.org/" "pkg-config"
+       pkgconfig    <- getProgram "pkg-config"
        mogreincpath <- (filter (\w -> take 2 w == "-I") . words) <$> getProgramOutput normal pkgconfig ["--cflags", "OGRE"]
        case mogreincpath of
          [] -> do
@@ -121,6 +121,8 @@ getIncludePaths lb = do
                  return defincludepaths
          (x:_) -> return $ [drop 2 x]
 
+getProgram pn = fst <$> requireProgram normal (simpleProgram pn) defaultProgramConfiguration
+
 ogreBuildHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> BuildFlags -> IO ()
 ogreBuildHook pd lb uh bf = do
   geniffile <- getSrcFile pd "if"
@@ -129,9 +131,9 @@ ogreBuildHook pd lb uh bf = do
   hiffile  <- getSrcFile pd "hif"
   listfile <- getSrcFile pd "list"
   winlistfile <- getSrcFile pd "list_win"
-  cgen <- getProgram "Hackage" "cgen"
-  grgen <- getProgram "Hackage" "grgen"
-  cgenhs <- getProgram "Hackage" "cgen-hs"
+  cgen <- getProgram "cgen"
+  grgen <- getProgram "grgen"
+  cgenhs <- getProgram "cgen-hs"
   let headerlistfile = case buildOS of
                          Windows -> winlistfile
                          _       -> listfile
