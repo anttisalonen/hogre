@@ -21,6 +21,8 @@ main = defaultMainWithHooks $ simpleUserHooks
   {
     buildHook   = ogreBuildHook
   , instHook    = ogreInstHook
+  , copyHook    = ogreCopyHook
+  , regHook     = ogreRegHook
   , cleanHook   = ogreCleanHook
   , haddockHook = ogreHaddockHook
   , hookedPrograms = [simpleProgram "cgen",
@@ -159,6 +161,16 @@ ogreInstHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> InstallFlag
 ogreInstHook pd lb uh ifl = do
   lib <- mkLibrary lb
   (instHook simpleUserHooks) pd{library = Just lib} lb uh ifl
+
+ogreCopyHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> CopyFlags -> IO ()
+ogreCopyHook pd lb uh cfl = do
+  lib <- mkLibrary lb
+  (copyHook simpleUserHooks) pd{library = Just lib} lb uh cfl
+
+ogreRegHook :: PackageDescription -> LocalBuildInfo -> UserHooks -> RegisterFlags -> IO ()
+ogreRegHook pd lb uh rfl = do
+  lib <- mkLibrary lb
+  (regHook simpleUserHooks) pd{library = Just lib} lb uh rfl
 
 ogreCleanHook pd n uh cf = do
     exists <- doesDirectoryExist resRoot
