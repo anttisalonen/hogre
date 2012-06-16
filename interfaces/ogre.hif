@@ -1,5 +1,9 @@
 @exclude
 .*Listener_.*
+getStatistics
+SkyBoxGenParameters
+SkyDomeGenParameters
+SkyPlaneGenParameters
 
 @default-in
 char*

@@ -3,6 +3,11 @@
 getShadowVolumeRenderableIterator
 .*Listener
 getResourceDeclarationList
+getResourceLocationList
+getInstalledPlugins
+getSubMeshNameMap
+getMovableType
+getType
 
 # returns a String, which is converted to char* -> error.
 getErrorDescription
@@ -13,6 +18,18 @@ validateConfigOptions
 # private class as parameter type.
 resourceExists
 resourceModifiedTime
+
+# returns const String&, which is converted to char* -> error.
+getWorldResourceGroupName
+findGroupContainingResource
+getUnsupportedTechniquesExplanation
+getMaterialScheme
+getRenderQueueInvocationSequenceName
+getName
+getAnimationName
+getTypeName
+getFSAAHint
+getSkeletonName
 
 @header
 # TODO: reverse the ordering once cgen generates the
@@ -46,6 +63,7 @@ String|char*
 AxisAlignedBoxSceneQuery
 PlaneBoundedVolumeListSceneQuery
 SphereSceneQuery
+FrameStats
 
 .*Listener
 
